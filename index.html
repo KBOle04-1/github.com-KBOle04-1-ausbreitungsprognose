@@ -67,7 +67,8 @@ button{padding:8px 12px;border:1px solid var(--line);border-radius:6px;backgroun
 button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:650;padding:12px;font-size:16px}
 button:disabled{opacity:.55;cursor:wait}
 .seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:6px;overflow:hidden}
-.seg.three{grid-template-columns:1fr 1fr 1fr}
+.seg.four{grid-template-columns:1fr 1fr}
+.rlab{position:absolute;transform:translate(-50%,-130%);white-space:nowrap;background:var(--panel);color:var(--ink);border:2px solid;border-radius:4px;padding:0 5px;font:600 12px/1.5 var(--font);font-variant-numeric:tabular-nums;box-shadow:0 1px 3px rgba(0,0,0,.35)}
 .seg button{border:0;border-radius:0;background:var(--bg);padding:9px 4px}
 .seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);font-weight:650}
 .check{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:14px}
@@ -108,6 +109,7 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
     <button id="next" aria-label="Nächstes Zeitfenster">▶</button>
     <button id="play">Abspielen</button>
   </div>
+  <label class="check" style="font-size:13px"><input type="checkbox" id="showRings" checked>Radien mit Entfernung einblenden</label>
   <div id="slotlabel"></div>
   <div id="slotinfo"></div>
 </div>
@@ -122,7 +124,7 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
 
   <section>
     <h2>2 · Szenario</h2>
-    <div class="seg three"><button id="modeGas" aria-pressed="true">Gefahrstoff</button><button id="modeFire" aria-pressed="false">Brandrauch</button><button id="modeCombo" aria-pressed="false">Kombiniert</button></div>
+    <div class="seg four"><button id="modeGas" aria-pressed="true">Gefahrstoff</button><button id="modeFire" aria-pressed="false">Brandrauch</button><button id="modeCombo" aria-pressed="false">Kombiniert</button><button id="modeVeg" aria-pressed="false">Vegetationsbrand</button></div>
     <div id="comboNote" class="small" hidden>Kombiniert: Gefahrstoff und Brandrauch werden vom selben Ort aus gerechnet und gemeinsam auf der Karte gezeigt. Gefahrstoff als Farbfläche, Brandrauch schraffiert.</div>
 
     <div id="gasBox" style="display:grid;gap:10px">
@@ -162,7 +164,28 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
       </select></label>
     </div>
 
-    <div class="row">
+    <div id="vegBox" style="display:none;gap:10px">
+      <label>Vegetation<select id="vfuel">
+        <option value="0.20,0.03">Gras, Wiese, Brachfläche</option>
+        <option value="0.15,0.03">Getreide, Stoppelfeld</option>
+        <option value="0.10,0.02">Heide, Gebüsch, Jungwuchs</option>
+        <option value="0.03,0.008" selected>Nadelwald, Bodenfeuer</option>
+        <option value="0.10,0.02">Nadelwald, Vollfeuer (Kronen)</option>
+        <option value="0.015,0.005">Laub- und Mischwald, Bodenfeuer</option>
+      </select></label>
+      <div class="row">
+        <label>Zustand der Vegetation<select id="vstate">
+          <option value="1.3">ausgedörrt (lange Trockenheit)</option>
+          <option value="1" selected>trocken</option>
+          <option value="0.6">mäßig trocken</option>
+          <option value="0.25">feucht, überwiegend grün</option>
+        </select></label>
+        <label>Brand bei Beginn, Durchmesser m<input type="number" id="vdia" value="20" min="1" step="5"></label>
+      </div>
+      <div class="small">Gerechnet wird die Ausbreitung der Feuerfront aus Wind, Luftfeuchte, Temperatur, Niederschlag und Hangneigung (bergauf schneller, bergab langsamer). Die Vegetation gilt im ganzen Gebiet als gleich: Straßen, Gewässer, Äcker und Ortschaften bremsen im Modell nicht. Flugfeuer ist nicht erfasst.</div>
+    </div>
+
+    <div class="row" id="thrRow">
       <label><span id="t1l">Schwelle 1</span><input type="number" id="thr1" step="any" min="0"></label>
       <label><span id="t2l">Schwelle 2</span><input type="number" id="thr2" step="any" min="0"></label>
       <label><span id="t3l">Schwelle 3</span><input type="number" id="thr3" step="any" min="0"></label>
@@ -178,11 +201,12 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
     </div>
 
     <div class="row">
-      <label>Umgebung<select id="urban"><option value="0">Freifläche</option><option value="1">Bebauung</option></select></label>
-      <label>Rechengebiet<select id="radius"><option value="1000">± 1 km</option><option value="2000">± 2 km</option><option value="5000" selected>± 5 km</option><option value="10000">± 10 km</option><option value="20000">± 20 km</option></select></label>
-      <label>Prognosedauer<select id="horizon"><option value="4">1 h</option><option value="8">2 h</option><option value="12" selected>3 h</option><option value="16">4 h</option><option value="24">6 h</option></select></label>
+      <label id="urbLbl">Umgebung<select id="urban"><option value="0">Freifläche</option><option value="1">Bebauung</option></select></label>
+      <label>Rechengebiet<select id="radius"><option value="1000">± 1 km</option><option value="2000">± 2 km</option><option value="5000" selected>± 5 km</option><option value="10000">± 10 km</option><option value="20000">± 20 km</option><option value="50000">± 50 km</option></select></label>
+      <label>Prognosedauer<select id="horizon"><option value="4">1 h</option><option value="8">2 h</option><option value="12" selected>3 h</option><option value="16">4 h</option><option value="24">6 h</option><option value="32">8 h</option><option value="48">12 h</option></select></label>
     </div>
     <div id="urbnote" class="small"></div>
+    <div class="small">Großes Rechengebiet bedeutet gröbere Auflösung (± 50 km: rund 400 m). Den Nahbereich getrennt mit kleinem Gebiet rechnen. Das Wetter wird am Freisetzungsort abgegriffen und gilt für das ganze Gebiet.</div>
     <label class="check"><input type="checkbox" id="useTerr" checked>Gelände (Topographie) berücksichtigen</label>
   </section>
 
@@ -197,6 +221,7 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
       <label>Wind m/s<input type="number" id="mspd" value="3" min="0" step="0.5"></label>
       <label>Schichtung<select id="mcls"><option value="0">A sehr labil</option><option value="1">B labil</option><option value="2">C leicht labil</option><option value="3" selected>D neutral</option><option value="4">E stabil</option><option value="5">F sehr stabil</option></select></label>
       <label>Temperatur °C<input type="number" id="mtemp" value="10" step="1"></label>
+      <label>Luftfeuchte %<input type="number" id="mrh" value="40" min="5" max="100" step="5"></label>
     </div>
   </section>
 
@@ -213,7 +238,7 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
   <section>
     <h2>Modell und Grenzen</h2>
     <div class="small">
-      Gauß-Wolkenmodell (Lagrange-Puffs, alle 30 s) mit Briggs-Ausbreitungsparametern, Schichtung nach Pasquill/Turner aus Wind, Globalstrahlung und Bewölkung, Windprofil mit der Höhe, Brandüberhöhung nach Briggs. Gelände: Windumlenkung an Hängen, Kaltluftabfluss bei stabiler Schichtung, hangabwärts fließende Schwergase und Auftreffen der Fahne auf höheres Gelände, jeweils als vereinfachte Korrektur.<br><br>
+      Gauß-Wolkenmodell (Lagrange-Puffs, alle 30 s) mit Briggs-Ausbreitungsparametern, Schichtung nach Pasquill/Turner aus Wind, Globalstrahlung und Bewölkung, Windprofil mit der Höhe, Brandüberhöhung nach Briggs. Vegetationsbrand: Ausbreitung der Feuerfront als Ellipse in Windrichtung nach Faustformeln (Anteil der Windgeschwindigkeit je Vegetation), Brennstofffeuchte aus Temperatur und Luftfeuchte, Hangneigung. Gelände: Windumlenkung an Hängen, Kaltluftabfluss bei stabiler Schichtung, hangabwärts fließende Schwergase und Auftreffen der Fahne auf höheres Gelände, jeweils als vereinfachte Korrektur.<br><br>
       Datenquellen: Open-Meteo (DWD ICON-D2, 15-Minuten-Werte), Bright Sky (DWD-Stationsmessung), Höhendaten Mapzen/AWS Terrain Tiles oder Open-Meteo (Copernicus DEM), Karten OpenTopoMap und OpenStreetMap, Suche Nominatim.<br><br>
       <strong>Nur Orientierungshilfe.</strong> Das Ergebnis ersetzt keine Messungen vor Ort, keine Fachberatung (z. B. TUIS, Fachberater Chemie) und keine zugelassenen Programme. Schwergase, Aerosole, chemische Umwandlung, Niederschlag, Gebäudeumströmung und kleinräumige Talwinde sind nicht oder nur grob erfasst. Die voreingestellten Schwellenwerte vor Verwendung mit der aktuellen AEGL-Liste abgleichen.<br><br>
       <a href="https://github.com/KBOle04-1/github.com-KBOle04-1-ausbreitungsprognose#readme">Hinweise zum Nachschlagen (Readme)</a>
@@ -394,13 +419,64 @@ function evalField(snap, P, N){
   }
   return out;
 }
-if (typeof module!=='undefined') module.exports={stabClass,sigma,trackPuffs,evalField,prepTerrain,plumeRiseFinal};
+
+/* ---------- Vegetationsbrand ---------- */
+// Feuchte des feinen toten Brennmaterials in % (Simard 1968) aus Temperatur °C und relativer Feuchte %
+function fuelMoisture(Tc, rh){
+  const T=Tc*9/5+32; let m;
+  if (rh<10) m=0.03229+0.281073*rh-0.000578*rh*T;
+  else if (rh<50) m=2.22749+0.160107*rh-0.014784*T;
+  else m=21.0606+0.005565*rh*rh-0.00035*rh*T-0.483199*rh;
+  return Math.max(1,m);
+}
+// V: {k, R0, state}; w: {u10, dx, dy, T, rh, prec}  ->  Kopf-Ausbreitung Rh (m/s), Exzentrizität e
+function rosParams(w, V){
+  const fmc=fuelMoisture(w.T,w.rh);
+  let fm=Math.min(1.3,Math.exp(-0.108*(fmc-6)))*V.state;
+  if (w.prec>0.5) fm*=0.1; else if (w.prec>0.1) fm*=0.4;
+  const u=Math.max(w.u10,0), LB=Math.min(6,1+0.3*u);
+  return {Rh:(V.R0+V.k*u)*fm, e:Math.sqrt(1-1/(LB*LB)), Rmin:0.5*V.R0*fm, fmc, dx:w.dx, dy:w.dy};
+}
+// Ankunftszeit der Feuerfront (s) je Rasterzelle; V: {N,R,terrain|null,k,R0,state,r0,tEnd,wx(t)}
+function spreadFire(V){
+  const N=V.N, R=V.R, cell=2*R/(N-1), T=V.terrain, arr=new Float32Array(N*N).fill(Infinity);
+  let hf=null;
+  if (T){ hf=new Float32Array(N*N); for(let j=0;j<N;j++)for(let i=0;i<N;i++) hf[j*N+i]=bil(T,T.h,-R+i*cell,-R+j*cell); }
+  const NB=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1],[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]]
+    .map(([a,b])=>{const n=Math.hypot(a,b);return {a,b,d:n*cell,ux:a/n,uy:b/n};});
+  const ht=[], hk=[];
+  const push=(t,k)=>{let i=ht.length;ht.push(t);hk.push(k);while(i>0){const p=(i-1)>>1;if(ht[p]<=t)break;ht[i]=ht[p];hk[i]=hk[p];i=p;}ht[i]=t;hk[i]=k;};
+  const pop=()=>{const t0=ht[0],k0=hk[0],t=ht.pop(),k=hk.pop(),n=ht.length;if(n){let i=0;for(;;){let c=2*i+1;if(c>=n)break;if(c+1<n&&ht[c+1]<ht[c])c++;if(ht[c]>=t)break;ht[i]=ht[c];hk[i]=hk[c];i=c;}ht[i]=t;hk[i]=k;}return [t0,k0];};
+  const c0=(N-1)/2, rc=Math.max(V.r0/cell,0.6), m=Math.ceil(rc);
+  for(let j=c0-m;j<=c0+m;j++)for(let i=c0-m;i<=c0+m;i++) if(Math.hypot(i-c0,j-c0)<=rc){arr[j*N+i]=0;push(0,j*N+i);}
+  const cache={};
+  while(ht.length){
+    const [t,k]=pop();
+    if (t>arr[k]) continue;
+    if (t>V.tEnd) break;
+    const b=Math.floor(t/300), p=cache[b]||(cache[b]=rosParams(V.wx(b*300+150),V));
+    const i=k%N, j=(k-i)/N;
+    for(const n of NB){
+      const ii=i+n.a, jj=j+n.b;
+      if (ii<0||jj<0||ii>=N||jj>=N) continue;
+      const kk=jj*N+ii;
+      if (arr[kk]<=t) continue;
+      let ros=Math.max(p.Rh*(1-p.e)/(1-p.e*(n.ux*p.dx+n.uy*p.dy)),p.Rmin);
+      if (hf) ros*=Math.min(5,Math.max(0.3,Math.exp(0.069*Math.atan((hf[kk]-hf[k])/n.d)*57.2958)));
+      if (ros<=1e-5) continue;
+      const tt=Math.fround(t+n.d/ros);
+      if (tt<arr[kk]){ arr[kk]=tt; push(tt,kk); }
+    }
+  }
+  return arr;
+}
+if (typeof module!=='undefined') module.exports={stabClass,sigma,trackPuffs,evalField,prepTerrain,plumeRiseFinal,fuelMoisture,rosParams,spreadFire};
 </script>
 
 <script>
 /* ===================== Oberfläche ===================== */
 const $=id=>document.getElementById(id);
-const NGRID=121;
+const gridN=R=>R<=10000?121:R<=20000?201:241;
 const SUBST=[
   {id:'cl2', name:'Chlor', M:70.9, lv:[0.5,2,20], kind:'aegl'},
   {id:'nh3', name:'Ammoniak', M:17.03, lv:[30,160,1100], kind:'aegl'},
@@ -499,12 +575,15 @@ function fillThresholds(){
 sel.onchange=fillThresholds;
 function setMode(m){
   S.mode=m;
-  $('modeGas').setAttribute('aria-pressed',m==='gas'); $('modeFire').setAttribute('aria-pressed',m==='fire'); $('modeCombo').setAttribute('aria-pressed',m==='combo');
-  $('gasBox').style.display=m!=='fire'?'grid':'none'; $('fireBox').style.display=m!=='gas'?'grid':'none';
+  for(const [id,k] of [['modeGas','gas'],['modeFire','fire'],['modeCombo','combo'],['modeVeg','veg']]) $(id).setAttribute('aria-pressed',m===k);
+  const veg=m==='veg';
+  $('gasBox').style.display=(m==='gas'||m==='combo')?'grid':'none'; $('fireBox').style.display=(m==='fire'||m==='combo')?'grid':'none';
+  $('vegBox').style.display=veg?'grid':'none';
+  for(const id of ['thrRow','thrnote','urbLbl','urbnote']) $(id).hidden=veg;
   document.querySelectorAll('.combo').forEach(e=>e.hidden=m!=='combo'); $('comboNote').hidden=m!=='combo';
   fillThresholds();
 }
-$('modeGas').onclick=()=>setMode('gas'); $('modeFire').onclick=()=>setMode('fire'); $('modeCombo').onclick=()=>setMode('combo');
+$('modeGas').onclick=()=>setMode('gas'); $('modeFire').onclick=()=>setMode('fire'); $('modeCombo').onclick=()=>setMode('combo'); $('modeVeg').onclick=()=>setMode('veg');
 function urbNote(){
   $('urbnote').innerHTML=$('urban').value==='1'
    ? '<strong>Bebauung:</strong> Ortslage, Stadt, Gewerbegebiet. Gebäude verwirbeln die Luft stark. Die Wolke wird schnell breiter und höher durchmischt, die Konzentration fällt rascher ab: kürzere Reichweite, dafür breiterer Streifen. Straßenschluchten, Stau hinter Gebäuden und Eindringen in Häuser sind nicht erfasst.'
@@ -534,7 +613,7 @@ async function loadWeather(){
   const {lat,lon}=S.src, key=lat.toFixed(3)+','+lon.toFixed(3);
   if (S.wx && S.wxKey===key && Date.now()-S.wx.fetched<10*60000) return S.wx;
   const base=`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&wind_speed_unit=ms&timeformat=unixtime&timezone=GMT&past_days=1&forecast_days=3`;
-  const v='temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,shortwave_radiation,precipitation';
+  const v='relative_humidity_2m,temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,shortwave_radiation,precipitation';
   const variants=[
     base+'&minutely_15='+v+'&hourly=cloud_cover,surface_pressure,boundary_layer_height',
     base+'&minutely_15='+v+'&hourly=cloud_cover,surface_pressure',
@@ -549,7 +628,7 @@ async function loadWeather(){
     U[i]=-sp*Math.sin(dir); V[i]=-sp*Math.cos(dir);
   }
   S.wx={fetched:Date.now(), step15:!!d.minutely_15, elev:d.elevation, t:m.time, U, V, spd:m.wind_speed_10m, gust:m.wind_gusts_10m,
-        rad:m.shortwave_radiation, temp:m.temperature_2m, prec:m.precipitation,
+        rad:m.shortwave_radiation, temp:m.temperature_2m, prec:m.precipitation, rh:m.relative_humidity_2m,
         th:h.time, cloud:h.cloud_cover, pres:h.surface_pressure, blh:h.boundary_layer_height};
   S.wxKey=key;
   return S.wx;
@@ -568,14 +647,15 @@ function wxAt(ts){
   let o;
   if ($('manual').checked){
     const dir=(+$('mdir').value||0)*Math.PI/180, sp=Math.max(0,+$('mspd').value||0), cls=+$('mcls').value;
-    o={u10:sp, U:-Math.sin(dir), V:-Math.cos(dir), gust:NaN, rad:NaN, cloud:NaN, T:+$('mtemp').value||10, prec:0, pres:1013, zi:ZI_DEF[cls], cls, manual:true};
+    o={u10:sp, U:-Math.sin(dir), V:-Math.cos(dir), gust:NaN, rad:NaN, cloud:NaN, T:+$('mtemp').value||10, rh:+$('mrh').value||40, prec:0, pres:1013, zi:ZI_DEF[cls], cls, manual:true};
   } else {
     const W=S.wx;
     o={u10:lin(W.t,W.spd,ts), U:lin(W.t,W.U,ts), V:lin(W.t,W.V,ts), gust:lin(W.t,W.gust,ts), rad:lin(W.t,W.rad,ts)||0,
-       T:lin(W.t,W.temp,ts), prec:lin(W.t,W.prec,ts)||0, cloud:lin(W.th,W.cloud,ts), pres:lin(W.th,W.pres,ts), blh:lin(W.th,W.blh,ts)};
+       T:lin(W.t,W.temp,ts), rh:lin(W.t,W.rh,ts), prec:lin(W.t,W.prec,ts)||0, cloud:lin(W.th,W.cloud,ts), pres:lin(W.th,W.pres,ts), blh:lin(W.th,W.blh,ts)};
     if(Number.isNaN(o.cloud)) o.cloud=50;
     if(Number.isNaN(o.pres)) o.pres=1013;
     if(Number.isNaN(o.T)) o.T=10;
+    if(Number.isNaN(o.rh)) o.rh=50;
     o.u10=o.u10||0;
     o.cls=stabClass(o.u10,o.rad,o.cloud);
     o.zi=o.cls<=3 ? (o.blh>50?o.blh:ZI_DEF[o.cls]) : 0;
@@ -595,7 +675,7 @@ function showWx(){
   const ts=t0sec(), W=S.wx;
   if(!(ts>=W.t[0] && ts<=W.t[W.t.length-1])){ $('wxinfo').textContent='Für diesen Zeitpunkt liegen keine Wetterdaten vor (verfügbar: gestern bis übermorgen).'; return; }
   const w=wxAt(ts);
-  $('wxinfo').innerHTML=`<strong>Vorhersage ${hhmm(ts)} Uhr</strong> (Open-Meteo, ${W.step15?'15-Minuten-Werte':'Stundenwerte, interpoliert'}): Wind ${windText(w)}, ${fmt(w.T)} °C, Bewölkung ${Math.round(w.cloud)} %, Strahlung ${Math.round(w.rad)} W/m², Niederschlag ${fmt(w.prec)} mm. Schichtung <strong>${CLS[w.cls]}</strong> (${CLSTXT[w.cls]})`+(w.zi?`, Mischungsschicht ${Math.round(w.zi)} m.`:'.');
+  $('wxinfo').innerHTML=`<strong>Vorhersage ${hhmm(ts)} Uhr</strong> (Open-Meteo, ${W.step15?'15-Minuten-Werte':'Stundenwerte, interpoliert'}): Wind ${windText(w)}, ${fmt(w.T)} °C, Luftfeuchte ${Math.round(w.rh)} %, Bewölkung ${Math.round(w.cloud)} %, Strahlung ${Math.round(w.rad)} W/m², Niederschlag ${fmt(w.prec)} mm. Schichtung <strong>${CLS[w.cls]}</strong> (${CLSTXT[w.cls]})`+(w.zi?`, Mischungsschicht ${Math.round(w.zi)} m.`:'.');
 }
 async function loadObs(){
   $('obsinfo').textContent='';
@@ -662,10 +742,10 @@ async function loadTerrain(R){
   const {lat,lon}=S.src, key=[lat.toFixed(5),lon.toFixed(5),R].join();
   if(S.terr&&S.terrKey===key) return S.terr;
   let r=null;
-  try{ r=await terrTiles(lat,lon,R,NGRID); }catch(e){ try{ r=await terrApi(lat,lon,R,NGRID); }catch(e2){ r=null; } }
+  try{ r=await terrTiles(lat,lon,R,gridN(R)); }catch(e){ try{ r=await terrApi(lat,lon,R,gridN(R)); }catch(e2){ r=null; } }
   S.terrKey=key;
   if(!r){ S.terr=null; $('terrinfo').textContent='Höhendaten nicht abrufbar. Es wird ohne Geländeeinfluss gerechnet.'; return null; }
-  S.terr=prepTerrain({N:NGRID,R,cell:2*R/(NGRID-1),h:r.h});
+  S.terr=prepTerrain({N:gridN(R),R,cell:2*R/(gridN(R)-1),h:r.h});
   $('terrinfo').textContent=`Gelände: Freisetzungsort ${Math.round(S.terr.hsrc)} m ü. NN, Rechengebiet ${Math.round(S.terr.min)} bis ${Math.round(S.terr.max)} m. Quelle: ${r.src}.`;
   return S.terr;
 }
@@ -674,6 +754,7 @@ async function loadTerrain(R){
 const pause=()=>new Promise(r=>setTimeout(r,0));
 function num(id,def){ const v=parseFloat($(id).value); return Number.isFinite(v)?v:def; }
 const HCOL=[[125,133,144],[91,75,154],[31,20,64]];
+const LLINE=['#b89600','#e06a00','#c4001a'], HLINE=['#5f6770','#5b4b9a','#1f1440'];
 
 async function run(){
   if(!S.src){ status('Zuerst den Freisetzungsort wählen: Karte antippen, Ort suchen oder Standort verwenden.'); return; }
@@ -684,78 +765,93 @@ async function run(){
     if(!manual){
       status('Lade Wetterdaten …'); await loadWeather(); showWx();
       const W=S.wx;
-      if(T0<W.t[0]||T0+nSlots*900>W.t[W.t.length-1]) throw new Error('Für den gewählten Zeitraum liegen keine Wetterdaten vor. Ereignisbeginn anpassen oder Wetter von Hand vorgeben.');
+      if(T0<W.t[0]||T0+nSlots*900>W.t[W.t.length-1]) throw new Error('Für den gewählten Zeitraum liegen keine Wetterdaten vor. Ereignisbeginn oder Prognosedauer anpassen oder Wetter von Hand vorgeben.');
     }
     let terr=null;
     if($('useTerr').checked){ status('Lade Höhendaten …'); terr=await loadTerrain(R); }
-
-    const w0=wxAt(T0), vm=22.414*w0.Tk/273.15*1013.25/w0.pres, combo=S.mode==='combo';
-    const base={nSlots,R,terrain:terr,urban:$('urban').value==='1',wx:t=>wxAt(T0+t),fireMW:0,dense:false,sz0:1};
-    const readThr=ids=>ids.map(id=>{const v=parseFloat($(id).value); return v>0?v:null;});
-    const mw=num('mw',10), fsy=Math.max(2,Math.sqrt(num('farea',100))/4.3);
-    const defs=[];
-    if(S.mode!=='fire'){
-      const s=curSubst(), M=s.kind==='custom'?num('cM',50):s.M, P={...base};
-      P.inst=S.inst; P.H0=num('hrel',1); P.dense=M/28.96>1.15;
-      const rho=M/vm;
-      if(S.inst){ P.massKg=num('mass',0); P.sy0=Math.max(2,0.5*Math.cbrt(P.massKg/rho)); P.sz0=Math.max(1,P.sy0/2); P.durS=0; }
-      else { P.rateKgS=num('rate',0)/60; P.durS=num('dur',30)*60; P.sy0=2; }
-      if(combo&&$('lift').checked){ P.fireMW=0.7*mw; P.sy0=Math.max(P.sy0,fsy); P.sz0=Math.max(P.sz0,2); P.H0=Math.max(P.H0,2); P.dense=false; }
-      const thrIn=readThr(['thr1','thr2','thr3']);
-      defs.push({P,thrIn,thr:thrIn.map(v=>v==null?null:v*M/vm*1e-6),unit:'ppm',names:LNAMES[s.kind],label:s.name,hatch:false});
-    }
-    if(S.mode!=='gas'){
-      const [hc,ys]=$('fuel').value.split(',').map(Number), P={...base};
-      P.inst=false; P.rateKgS=mw/hc*ys; P.durS=num('fdur',60)*60; P.H0=2; P.fireMW=0.7*mw; P.sy0=fsy; P.sz0=2;
-      const thrIn=readThr(combo?['fthr1','fthr2','fthr3']:['thr1','thr2','thr3']);
-      defs.push({P,thrIn,thr:thrIn.map(v=>v==null?null:v*1e-6),unit:'mg/m³',names:combo?['Rauch 1','Rauch 2','Rauch 3']:LNAMES.fire,label:'Brandrauch '+mw+' MW',hatch:combo});
-    }
-    for(const d of defs) if(d.thr.every(v=>v==null)) throw new Error('Für '+d.label+' mindestens einen Schwellenwert angeben.');
-
-    const N=NGRID, cell=2*R/(N-1), meta=[];
+    const meta=[];
     for(let n=1;n<=nSlots;n++) meta.push({n,t0:T0+(n-1)*900,t1:T0+n*900,w:wxAt(T0+n*900-450)});
-    for(const d of defs){
-      status('Berechne Ausbreitung: '+d.label+' …'); await pause();
-      const snaps=trackPuffs(d.P), env=new Float32Array(N*N); d.slots=[];
-      for(let n=1;n<=nSlots;n++){
-        status(`${d.label}: Zeitfenster ${n} von ${nSlots} …`); await pause();
-        const f=new Float32Array(N*N);
-        for(const sn of snaps) if(sn.t>(n-1)*900 && sn.t<=n*900){
-          const g=evalField(sn,d.P,N);
-          for(let k=0;k<f.length;k++) if(g[k]>f[k]) f[k]=g[k];
-        }
-        for(let k=0;k<f.length;k++) if(f[k]>env[k]) env[k]=f[k];
-        d.slots.push({...analyse(f,d.thr,N,R,cell), img:render(f,d.thr,N,d.hatch)});
-      }
-      d.all={...analyse(env,d.thr,N,R,cell), img:render(env,d.thr,N,d.hatch)};
-    }
+    const defs = S.mode==='veg' ? await runVeg(R,nSlots,T0,terr,meta) : await runCloud(R,nSlots,T0,terr);
     S.res={layers:defs,meta,R,lat:S.src.lat,lon:S.src.lon,T0,nSlots,terr:!!terr};
     warnings(defs,meta,terr,manual);
     buildTable(); $('timeline').hidden=false; $('tablesec').hidden=false;
     $('slider').max=nSlots; show(0);
     const far=Math.max(...defs.flatMap(d=>d.all.reach));
-    if(map){ const b=boundsOf(S.res); map.fitBounds(far>0?L.latLngBounds(b).pad(-0.5+Math.min(0.5,far/R*0.55)):b); }
+    if(map){ const b=boundsOf(S.res); map.fitBounds(far>0?L.latLngBounds(b).pad(-0.5+Math.min(0.5,far/R*0.6)):b); }
     status(`Fertig: ${defs.map(d=>d.label).join(' + ')}, Beginn ${hhmm(T0)} Uhr, ${nSlots} Zeitfenster zu je 15 Minuten.`);
   }catch(e){ status('Fehler: '+e.message); console.error(e); }
   btn.disabled=false;
 }
 $('run').onclick=run;
 
+/* Gefahrstoff, Brandrauch, Kombiniert */
+async function runCloud(R,nSlots,T0,terr){
+  const w0=wxAt(T0), vm=22.414*w0.Tk/273.15*1013.25/w0.pres, combo=S.mode==='combo';
+  const base={nSlots,R,terrain:terr,urban:$('urban').value==='1',wx:t=>wxAt(T0+t),fireMW:0,dense:false,sz0:1};
+  const readThr=ids=>ids.map(id=>{const v=parseFloat($(id).value); return v>0?v:null;});
+  const mw=num('mw',10), fsy=Math.max(2,Math.sqrt(num('farea',100))/4.3);
+  const defs=[];
+  if(S.mode!=='fire'){
+    const s=curSubst(), M=s.kind==='custom'?num('cM',50):s.M, P={...base};
+    P.inst=S.inst; P.H0=num('hrel',1); P.dense=M/28.96>1.15;
+    const rho=M/vm;
+    if(S.inst){ P.massKg=num('mass',0); P.sy0=Math.max(2,0.5*Math.cbrt(P.massKg/rho)); P.sz0=Math.max(1,P.sy0/2); P.durS=0; }
+    else { P.rateKgS=num('rate',0)/60; P.durS=num('dur',30)*60; P.sy0=2; }
+    if(combo&&$('lift').checked){ P.fireMW=0.7*mw; P.sy0=Math.max(P.sy0,fsy); P.sz0=Math.max(P.sz0,2); P.H0=Math.max(P.H0,2); P.dense=false; }
+    const thrIn=readThr(['thr1','thr2','thr3']);
+    defs.push({P,thrIn,thr:thrIn.map(v=>v==null?null:v*M/vm*1e-6),unit:'ppm',names:LNAMES[s.kind],label:s.name,hatch:false});
+  }
+  if(S.mode!=='gas'){
+    const [hc,ys]=$('fuel').value.split(',').map(Number), P={...base};
+    P.inst=false; P.rateKgS=mw/hc*ys; P.durS=num('fdur',60)*60; P.H0=2; P.fireMW=0.7*mw; P.sy0=fsy; P.sz0=2;
+    const thrIn=readThr(combo?['fthr1','fthr2','fthr3']:['thr1','thr2','thr3']);
+    defs.push({P,thrIn,thr:thrIn.map(v=>v==null?null:v*1e-6),unit:'mg/m³',names:combo?['Rauch 1','Rauch 2','Rauch 3']:LNAMES.fire,label:'Brandrauch '+mw+' MW',hatch:combo});
+  }
+  for(const d of defs) if(d.thr.every(v=>v==null)) throw new Error('Für '+d.label+' mindestens einen Schwellenwert angeben.');
+  const N=gridN(R), cell=2*R/(N-1);
+  for(const d of defs){
+    d.dense=d.P.dense; d.heads=[0,1,2].filter(l=>d.thr[l]!=null).map(l=>d.names[l]);
+    status('Berechne Ausbreitung: '+d.label+' …'); await pause();
+    const snaps=trackPuffs(d.P), env=new Float32Array(N*N); d.slots=[];
+    for(let n=1;n<=nSlots;n++){
+      status(`${d.label}: Zeitfenster ${n} von ${nSlots} …`); await pause();
+      const f=new Float32Array(N*N);
+      for(const sn of snaps) if(sn.t>(n-1)*900 && sn.t<=n*900){
+        const g=evalField(sn,d.P,N);
+        for(let k=0;k<f.length;k++) if(g[k]>f[k]) f[k]=g[k];
+      }
+      for(let k=0;k<f.length;k++) if(f[k]>env[k]) env[k]=f[k];
+      d.slots.push(cloudPost(d,{...analyse(f,d.thr,N,R,cell), img:render(f,d.thr,N,d.hatch)}));
+    }
+    d.all=cloudPost(d,{...analyse(env,d.thr,N,R,cell), img:render(env,d.thr,N,d.hatch)});
+    if(!d.all.reach.some(r=>r>0)) d.none=true;
+  }
+  return defs;
+}
+function cloudPost(d,a){
+  a.chips=[]; a.rings=[]; a.cells=[];
+  for(let l=2;l>=0;l--) if(d.thr[l]!=null){
+    a.chips.push(`<span class="chip"><span class="sw${d.hatch?' h'+(l+1):''}"${d.hatch?'':` style="background:var(--l${l+1})"`}></span>${d.names[l]} (${d.thrIn[l].toLocaleString('de-DE')} ${d.unit}): ${a.reach[l]>0?'bis '+dist(a.reach[l])+', '+fmt(a.area[l]/1e6,2)+' km²':'nicht erreicht'}</span>`);
+    if(a.reach[l]>0) a.rings.push({r:a.reach[l],far:a.far[l],color:(d.hatch?HLINE:LLINE)[l],dash:d.hatch,text:d.names[l]+' · '+dist(a.reach[l])});
+  }
+  for(let l=0;l<3;l++) if(d.thr[l]!=null) a.cells.push(dist(a.reach[l]));
+  return a;
+}
 function analyse(f,thr,N,R,cell){
-  const reach=[0,0,0], area=[0,0,0]; let max=0, edge=false;
+  const reach=[0,0,0], area=[0,0,0], far=[[0,0],[0,0],[0,0]]; let max=0, edge=false;
   const low=thr.find(v=>v!=null);
   for(let j=0;j<N;j++)for(let i=0;i<N;i++){
     const c=f[j*N+i]; if(c>max) max=c;
     if(c<low) continue;
     if(i===0||j===0||i===N-1||j===N-1) edge=true;
-    const d=Math.hypot(-R+i*cell,-R+j*cell);
-    for(let l=0;l<3;l++) if(thr[l]!=null&&c>=thr[l]){ area[l]+=cell*cell; if(d>reach[l]) reach[l]=d; }
+    const x=-R+i*cell, y=-R+j*cell, d=Math.hypot(x,y);
+    for(let l=0;l<3;l++) if(thr[l]!=null&&c>=thr[l]){ area[l]+=cell*cell; if(d>reach[l]){ reach[l]=d; far[l]=[x,y]; } }
   }
-  for(let l=0;l<3;l++) if(area[l]>0&&reach[l]<cell) reach[l]=cell;
-  return {reach,area,max,edge};
+  for(let l=0;l<3;l++) if(area[l]>0&&reach[l]<cell){ reach[l]=cell; far[l]=[0,cell]; }
+  return {reach,area,far,max,edge};
 }
 function render(f,thr,N,hatch){
-  const K=3, M=(N-1)*K+1, cv=document.createElement('canvas'); cv.width=cv.height=M;
+  const K=N>121?2:3, M=(N-1)*K+1, cv=document.createElement('canvas'); cv.width=cv.height=M;
   const cx=cv.getContext('2d'), im=cx.createImageData(M,M), D=im.data, col=hatch?HCOL:LCOL;
   for(let r=0;r<M;r++){
     const fy=(M-1-r)/K, j=Math.min(N-2,Math.floor(fy)), b=fy-j;
@@ -771,31 +867,111 @@ function render(f,thr,N,hatch){
   cx.putImageData(im,0,0);
   return cv.toDataURL('image/png');
 }
+
+/* Vegetationsbrand */
+async function runVeg(R,nSlots,T0,terr,meta){
+  const N=241, cell=2*R/(N-1), [k,R0]=$('vfuel').value.split(',').map(Number);
+  const V={N,R,terrain:terr,k,R0,state:+$('vstate').value,r0:num('vdia',20)/2,tEnd:nSlots*900,wx:t=>wxAt(T0+t)};
+  const name=$('vfuel').selectedOptions[0].textContent;
+  status('Berechne Feuerfront …'); await pause();
+  const arr=spreadFire(V), tEnd=V.tEnd;
+  const d={label:'Vegetationsbrand ('+name+')',heads:['Spitze m/min','Fläche ha','Front bis'],veg:true,slots:[]};
+  const stat=t1=>{
+    let area=0, reach=0, far=[0,0], edge=false;
+    for(let j=0;j<N;j++)for(let i=0;i<N;i++) if(arr[j*N+i]<=t1){
+      area+=cell*cell; if(i===0||j===0||i===N-1||j===N-1) edge=true;
+      const x=-R+i*cell, y=-R+j*cell, q=Math.hypot(x,y); if(q>reach){ reach=q; far=[x,y]; }
+    }
+    return {area,reach:[Math.max(reach,V.r0)],far,edge};
+  };
+  const post=(a,p,total)=>{
+    a.chips=[`<span class="chip"><span class="sw" style="background:#c4001a"></span>Brandfläche ${fmt(a.area/1e4,a.area<1e5?2:1)} ha</span>`,
+             `<span class="chip">Front bis ${dist(a.reach[0])}</span>`];
+    if(!total) a.chips.push(`<span class="chip"><span class="sw" style="background:#ff7800"></span>Zuwachs in diesem Zeitfenster</span>`,
+             `<span class="chip">Spitze ${fmt(p.Rh*60,1)} m/min</span>`,`<span class="chip">Brennstofffeuchte ${Math.round(p.fmc)} %</span>`);
+    else a.chips.push(`<span class="chip"><span class="sw" style="background:linear-gradient(90deg,#ffdc14,#a50014)"></span>Farbe: früh hell, spät dunkel</span>`);
+    a.rings=[{r:a.reach[0],far:a.far,color:'#c4001a',dash:false,text:'Front · '+dist(a.reach[0])}];
+    a.cells=[p?fmt(p.Rh*60,1):'',fmt(a.area/1e4,1),dist(a.reach[0])];
+    return a;
+  };
+  for(let n=1;n<=nSlots;n++){
+    if(n%8===0){ status(`Vegetationsbrand: Zeitfenster ${n} von ${nSlots} …`); await pause(); }
+    const p=rosParams(meta[n-1].w,V);
+    d.slots.push(post({...stat(n*900), img:renderVeg(arr,N,(n-1)*900,n*900,tEnd,false)},p,false));
+  }
+  d.all=post({...stat(tEnd), img:renderVeg(arr,N,0,tEnd,tEnd,true)},null,true);
+  d.maxU=Math.max(...meta.map(m=>m.w.u10));
+  return [d];
+}
+function renderVeg(arr,N,ta,tb,tEnd,total){
+  const K=2, M=(N-1)*K+1, cv=document.createElement('canvas'); cv.width=cv.height=M;
+  const cx=cv.getContext('2d'), im=cx.createImageData(M,M), D=im.data, cap=tEnd*3+1;
+  const g=k=>Math.min(arr[k],cap);
+  for(let r=0;r<M;r++){
+    const fy=(M-1-r)/K, j=Math.min(N-2,Math.floor(fy)), b=fy-j;
+    for(let c=0;c<M;c++){
+      const fx=c/K, i=Math.min(N-2,Math.floor(fx)), a=fx-i, k=j*N+i;
+      const t=g(k)*(1-a)*(1-b)+g(k+1)*a*(1-b)+g(k+N)*(1-a)*b+g(k+N+1)*a*b;
+      if(t>tb) continue;
+      const o=(r*M+c)*4;
+      if(total){ const q=Math.floor(t/3600)*3600/Math.max(tEnd-3600,1), z=Math.min(1,q); D[o]=255-90*z; D[o+1]=220*(1-z); D[o+2]=20; D[o+3]=165; }
+      else if(t>ta){ D[o]=255; D[o+1]=120; D[o+2]=0; D[o+3]=195; }
+      else { D[o]=150; D[o+1]=15; D[o+2]=20; D[o+3]=150; }
+    }
+  }
+  cx.putImageData(im,0,0);
+  return cv.toDataURL('image/png');
+}
+
 function boundsOf(r){
   const dLat=r.R/111320, dLon=r.R/(111320*Math.cos(r.lat*Math.PI/180));
   return [[r.lat-dLat,r.lon-dLon],[r.lat+dLat,r.lon+dLon]];
 }
 
 function warnings(defs,meta,terr,manual){
-  const w=[];
-  if(defs.some(d=>d.all.edge)) w.push('Die Gefahrenzone erreicht den Rand des Rechengebiets. Rechengebiet vergrößern.');
-  for(const d of defs) if(!d.all.reach.some(r=>r>0)) w.push(d.label+': Keine Schwelle wird am Boden überschritten. Eine aufsteigende Fahne kann über das Gebiet hinwegziehen und weiter entfernt oder an höher gelegenem Gelände auftreffen.');
-  if(defs.some(d=>d.P.dense)) w.push('Schwergas: Die Wolke breitet sich in Bodennähe flach aus und sammelt sich in Senken, Kellern und Tälern. Nahbereich und Tieflagen sind im Modell unterschätzt.');
-  if(meta.some(s=>s.w.u10<1)) w.push('Schwachwind unter 1 m/s: Windrichtung unzuverlässig, Ausbreitung in alle Richtungen möglich. Gefahrenbereich kreisförmig annehmen.');
-  if(meta.some(s=>s.w.prec>0.1)) w.push('Niederschlag im Prognosezeitraum: Auswaschung und Rauchniederschlag sind nicht berücksichtigt.');
-  if(meta.some(s=>s.w.gust>2*Math.max(s.w.u10,1))) w.push('Starke Böen: Die Fahne pendelt, seitliche Zonen großzügiger ansetzen.');
+  const w=[], veg=defs.some(d=>d.veg);
+  if(defs.some(d=>d.all.edge)) w.push((veg?'Die Feuerfront':'Die Gefahrenzone')+' erreicht den Rand des Rechengebiets. Rechengebiet vergrößern.');
+  for(const d of defs) if(d.none) w.push(d.label+': Keine Schwelle wird am Boden überschritten. Eine aufsteigende Fahne kann über das Gebiet hinwegziehen und weiter entfernt oder an höher gelegenem Gelände auftreffen.');
+  if(defs.some(d=>d.dense)) w.push('Schwergas: Die Wolke breitet sich in Bodennähe flach aus und sammelt sich in Senken, Kellern und Tälern. Nahbereich und Tieflagen sind im Modell unterschätzt.');
+  if(veg){
+    w.push('Die Vegetation gilt überall als gleich und brennbar. Straßen, Gewässer, Äcker und Ortschaften als Brandriegel selbst in der Karte berücksichtigen.');
+    w.push('Flugfeuer ist nicht erfasst'+(defs[0].maxU>=8?'; bei dem vorhergesagten starken Wind ist es wahrscheinlich und kann die Front deutlich schneller vorantreiben.':'.'));
+    w.push('Die Ausbreitungsgeschwindigkeit beruht auf Faustformeln. Mit der beobachteten Frontgeschwindigkeit vergleichen und Vegetation oder Zustand anpassen.');
+  } else {
+    if(meta.some(s=>s.w.u10<1)) w.push('Schwachwind unter 1 m/s: Windrichtung unzuverlässig, Ausbreitung in alle Richtungen möglich. Gefahrenbereich kreisförmig annehmen.');
+    if(meta.some(s=>s.w.prec>0.1)) w.push('Niederschlag im Prognosezeitraum: Auswaschung und Rauchniederschlag sind nicht berücksichtigt.');
+    if(meta.some(s=>s.w.gust>2*Math.max(s.w.u10,1))) w.push('Starke Böen: Die Fahne pendelt, seitliche Zonen großzügiger ansetzen.');
+    if(S.res.R>20000) w.push('Großes Rechengebiet: Auflösung rund 400 m, Wetter nur vom Freisetzungsort. Entfernungen über 10 km sind grobe Schätzungen.');
+  }
+  if(veg&&meta.some(s=>s.w.gust>2*Math.max(s.w.u10,1))) w.push('Starke Böen: Die Front kann sprunghaft und in wechselnde Richtung laufen.');
   if(!terr) w.push($('useTerr').checked?'Höhendaten nicht abrufbar: ohne Geländeeinfluss gerechnet.':'Gelände abgeschaltet: ohne Geländeeinfluss gerechnet.');
   if(manual) w.push('Wetter von Hand vorgegeben: Wind und Schichtung bleiben über alle Zeitfenster gleich.');
   const el=$('warnings'); el.hidden=!w.length; el.innerHTML='<ul>'+w.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
 }
 
 /* ---------- Anzeige ---------- */
+function drawRings(rings){
+  const r=S.res;
+  (S.rings||[]).forEach(o=>map.removeLayer(o)); S.rings=[];
+  if(!$('showRings').checked) return;
+  const cosl=Math.cos(r.lat*Math.PI/180), ll=p=>[r.lat+p[1]/111320, r.lon+p[0]/(111320*cosl)];
+  for(const g of rings){
+    if(!(g.r>0)) continue;
+    const q=Math.hypot(g.far[0],g.far[1])||1, end=ll([g.far[0]/q*g.r,g.far[1]/q*g.r]);
+    S.rings.push(L.circle([r.lat,r.lon],{radius:g.r,color:g.color,weight:3,fill:false,dashArray:g.dash?'7 7':null,interactive:false}).addTo(map));
+    S.rings.push(L.polyline([[r.lat,r.lon],end],{color:g.color,weight:2,dashArray:'2 6',interactive:false}).addTo(map));
+    S.rings.push(L.marker(end,{interactive:false,icon:L.divIcon({className:'',iconSize:[0,0],html:`<span class="rlab" style="border-color:${g.color}">${g.text}</span>`})}).addTo(map));
+  }
+}
+$('showRings').onchange=()=>show(S.slot);
 function show(idx){
   const r=S.res; if(!r) return;
   S.slot=idx; $('slider').value=idx;
+  const pick=d=>idx===0?d.all:d.slots[idx-1];
   if(map){
     (S.overlays||[]).forEach(o=>map.removeLayer(o));
-    S.overlays=r.layers.map(d=>L.imageOverlay((idx===0?d.all:d.slots[idx-1]).img,boundsOf(r),{opacity:1,interactive:false}).addTo(map));
+    S.overlays=r.layers.map(d=>L.imageOverlay(pick(d).img,boundsOf(r),{opacity:1,interactive:false}).addTo(map));
+    drawRings(r.layers.flatMap(d=>pick(d).rings));
   }
   const m=idx===0?null:r.meta[idx-1];
   $('slotlabel').textContent=idx===0
@@ -804,22 +980,17 @@ function show(idx){
   let h='';
   if(m){ const w=m.w; h+=`<div><span class="arrow" style="transform:rotate(${w.dir}deg)">↓</span> Wind ${windText(w)} · Schichtung ${CLS[w.cls]} (${CLSTXT[w.cls]})${w.manual?'':' · '+fmt(w.T)+' °C'}</div>`; }
   for(const d of r.layers){
-    const s=idx===0?d.all:d.slots[idx-1];
     if(r.layers.length>1) h+='<div class="grp">'+d.label+'</div>';
-    h+='<div class="reach">';
-    for(let l=2;l>=0;l--) if(d.thr[l]!=null)
-      h+=`<span class="chip"><span class="sw${d.hatch?' h'+(l+1):''}"${d.hatch?'':` style="background:var(--l${l+1})"`}></span>${d.names[l]} (${d.thrIn[l].toLocaleString('de-DE')} ${d.unit}): ${s.reach[l]>0?'bis '+dist(s.reach[l])+', '+fmt(s.area[l]/1e6,2)+' km²':'nicht erreicht'}</span>`;
-    h+='</div>';
+    h+='<div class="reach">'+pick(d).chips.join('')+'</div>';
   }
   h+='<div class="small">Gelände: '+(r.terr?'berücksichtigt':'nicht berücksichtigt')+'</div>';
   $('slotinfo').innerHTML=h;
   document.querySelectorAll('#tbody tr').forEach((tr,i)=>tr.classList.toggle('on',i===idx));
 }
 function buildTable(){
-  const r=S.res, cols=[];
-  r.layers.forEach(d=>[0,1,2].forEach(l=>{ if(d.thr[l]!=null) cols.push([d,l]); }));
-  $('thead').innerHTML='<tr><th>Zeitfenster</th><th>Wind</th><th>Kl.</th>'+cols.map(([d,l])=>'<th>'+d.names[l]+'</th>').join('')+'</tr>';
-  const row=(i,first,w)=>'<tr><td>'+first+'</td><td>'+(w?Math.round(w.dir)+'° / '+fmt(w.u10)+' m/s':'')+'</td><td>'+(w?CLS[w.cls]:'')+'</td>'+cols.map(([d,l])=>'<td>'+dist((i<0?d.all:d.slots[i]).reach[l])+'</td>').join('')+'</tr>';
+  const r=S.res;
+  $('thead').innerHTML='<tr><th>Zeitfenster</th><th>Wind</th><th>Kl.</th>'+r.layers.flatMap(d=>d.heads).map(x=>'<th>'+x+'</th>').join('')+'</tr>';
+  const row=(i,first,w)=>'<tr><td>'+first+'</td><td>'+(w?Math.round(w.dir)+'° / '+fmt(w.u10)+' m/s':'')+'</td><td>'+(w?CLS[w.cls]:'')+'</td>'+r.layers.flatMap(d=>(i<0?d.all:d.slots[i]).cells).map(x=>'<td>'+x+'</td>').join('')+'</tr>';
   $('tbody').innerHTML=row(-1,'Gesamt',null)+r.meta.map((m,i)=>row(i,hhmm(m.t0)+'–'+hhmm(m.t1),m.w)).join('');
   document.querySelectorAll('#tbody tr').forEach((tr,i)=>tr.onclick=()=>{stopPlay();show(i);});
 }

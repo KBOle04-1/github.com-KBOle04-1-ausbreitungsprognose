@@ -1,6 +1,6 @@
 # Ausbreitungsprognose Gefahrstoff und Brandrauch
 
-Web-App für iPhone und iPad. Sie schätzt ab, wohin sich ein gasförmiger Gefahrstoff oder eine Rauchgaswolke ausbreitet, und zeigt das Ergebnis in Zeitfenstern von je 15 Minuten auf der Karte.
+Web-App für iPhone und iPad. Sie schätzt ab, wohin sich ein gasförmiger Gefahrstoff, eine Rauchgaswolke oder die Front eines Wald- oder Vegetationsbrandes ausbreitet, und zeigt das Ergebnis in Zeitfenstern von je 15 Minuten auf der Karte.
 
 **Nur Orientierungshilfe.** Das Ergebnis ersetzt keine Messungen vor Ort, keine Fachberatung (z. B. TUIS, Fachberater Chemie) und keine zugelassenen Programme.
 
@@ -25,7 +25,7 @@ Für Wetter, Höhendaten und Karten ist eine Internetverbindung nötig. Nach ein
 
 Die **Zeittabelle** listet für jedes Zeitfenster Wind, Schichtung und Reichweite je Schwelle. Reichweite ist die größte Entfernung vom Freisetzungsort, in der die Schwelle überschritten wird.
 
-## Die drei Szenarien
+## Die vier Szenarien
 
 ### Gefahrstoff
 
@@ -46,6 +46,37 @@ Die **Zeittabelle** listet für jedes Zeitfenster Wind, Schichtung und Reichweit
 - Häkchen **„Stoff wird im Brand freigesetzt und steigt mit dem Rauch auf"**:
   - gesetzt: Der Stoff steigt mit dem Brandrauch auf (z. B. brennendes Gefahrstofflager).
   - nicht gesetzt: Der Stoff tritt bodennah neben dem Brand aus (z. B. Leck). Das ergibt meist deutlich größere Reichweiten am Boden.
+
+### Vegetationsbrand
+
+Prognose für Wald- und Vegetationsbrände. Gerechnet wird, wie weit die Feuerfront in jedem Zeitfenster kommt.
+
+- **Vegetation:** Gras/Wiese, Getreide/Stoppelfeld, Heide/Gebüsch, Nadelwald Bodenfeuer, Nadelwald Vollfeuer, Laub- und Mischwald.
+- **Zustand der Vegetation:** von „ausgedörrt" bis „feucht, überwiegend grün". Damit wird die Vorgeschichte (Trockenheit) eingestellt, die aus dem aktuellen Wetter nicht ablesbar ist.
+- **Brand bei Beginn:** Durchmesser der brennenden Fläche zum Startzeitpunkt.
+- **Berücksichtigt werden** dieselben Größen wie bei den anderen Szenarien: Wind (Richtung und Stärke je Zeitfenster), Temperatur, Luftfeuchte, Niederschlag und Gelände. Bergauf läuft das Feuer schneller (etwa doppelt so schnell je 10° Hangneigung), bergab langsamer.
+- **Darstellung im Zeitfenster:** dunkelrot die bisher verbrannte Fläche, orange der Zuwachs in diesen 15 Minuten. Im Gesamtbereich ist die Fläche stundenweise von hell (früh) nach dunkel (spät) gefärbt.
+- **Angezeigt werden** Brandfläche in Hektar, größte Entfernung der Front, Geschwindigkeit der Feuerspitze in m/min und die berechnete Brennstofffeuchte.
+
+Grenzen dieses Szenarios:
+
+- Die Vegetation gilt im ganzen Gebiet als gleich und brennbar. Straßen, Gewässer, Äcker und Ortschaften bremsen im Modell nicht; solche Brandriegel selbst in der Karte berücksichtigen.
+- Flugfeuer ist nicht erfasst. Bei starkem Wind kann es die Front deutlich schneller vorantreiben.
+- Die Geschwindigkeiten beruhen auf Faustformeln (Anteil der Windgeschwindigkeit je Vegetation, z. B. rund 20 % bei trockenem Gras, rund 10 % bei Vollfeuer). Mit der beobachteten Frontgeschwindigkeit vergleichen und Vegetation oder Zustand anpassen.
+- Löschmaßnahmen sind nicht berücksichtigt.
+
+## Radien auf der Karte
+
+Für jede Schwelle wird ein farbiger Umkreis um den Freisetzungsort gezeichnet, dessen Radius der Reichweite entspricht. Eine gepunktete Linie führt zum entferntesten Punkt, dort steht die Entfernung (z. B. „AEGL-2 · 1,9 km"). Gefahrstoff: durchgezogene Kreise in Gelb, Orange, Rot. Brandrauch im kombinierten Modus: gestrichelte Kreise. Vegetationsbrand: ein roter Kreis für die Front. Mit dem Häkchen „Radien mit Entfernung einblenden" über der Zeitleiste lassen sie sich ausblenden.
+
+Der Umkreis zeigt die größte Entfernung in irgendeine Richtung. Betroffen ist nur die farbige Fläche, nicht der ganze Kreis.
+
+## Rechengebiet und Prognosedauer
+
+- Rechengebiet von ± 1 km bis ± 50 km, Prognosedauer von 1 bis 12 Stunden.
+- Je größer das Gebiet, desto gröber die Auflösung: bis ± 10 km 1/120 der Gebietsbreite (bei ± 5 km rund 80 m), bei ± 20 km 200 m, bei ± 50 km rund 400 m. Den Nahbereich getrennt mit kleinem Gebiet rechnen.
+- Das Wetter wird am Freisetzungsort abgegriffen und gilt für das ganze Gebiet. Über 10 km Entfernung sind die Ergebnisse grobe Schätzungen: Der Wind kann dort anders wehen, und die Ausbreitungsformeln sind für solche Entfernungen nur eingeschränkt belegt.
+- Vegetationsbrand rechnet immer mit 1/240 der Gebietsbreite (bei ± 2 km rund 17 m).
 
 ## Topographie
 
@@ -76,9 +107,9 @@ Beispiel Chlor, 30 kg/min, Wind 3 m/s, neutrale Schichtung, ohne Gelände: AEGL-
 
 ## Wetter
 
-- **Vorhersage:** Open-Meteo mit 15-Minuten-Werten (in Mitteleuropa DWD ICON-D2): Wind, Böen, Temperatur, Strahlung, Bewölkung, Niederschlag.
+- **Vorhersage:** Open-Meteo mit 15-Minuten-Werten (in Mitteleuropa DWD ICON-D2): Wind, Böen, Temperatur, Luftfeuchte, Strahlung, Bewölkung, Niederschlag.
 - **Messung:** Zum Vergleich wird die aktuelle Messung der nächsten DWD-Station angezeigt.
-- **Von Hand:** Für Messungen vor Ort oder Übungen lassen sich Windrichtung, Windstärke, Schichtung und Temperatur vorgeben. Sie gelten dann für alle Zeitfenster.
+- **Von Hand:** Für Messungen vor Ort oder Übungen lassen sich Windrichtung, Windstärke, Schichtung, Temperatur und Luftfeuchte vorgeben. Sie gelten dann für alle Zeitfenster.
 - **Schichtung:** Klassen A (sehr labil) bis F (sehr stabil), bestimmt aus Wind, Strahlung und Bewölkung. Stabile Schichtung (klare, windschwache Nacht) bedeutet schmale Wolke und große Reichweite.
 - Der Ereignisbeginn kann zwischen gestern und übermorgen liegen.
 
@@ -86,7 +117,7 @@ Beispiel Chlor, 30 kg/min, Wind 3 m/s, neutrale Schichtung, ohne Gelände: AEGL-
 
 | Hinweis | Was zu tun ist |
 |---|---|
-| Gefahrenzone erreicht den Rand | Rechengebiet vergrößern |
+| Gefahrenzone oder Feuerfront erreicht den Rand | Rechengebiet vergrößern |
 | Keine Schwelle überschritten | Fahne kann über das Gebiet hinwegziehen; größeres Rechengebiet prüfen |
 | Schwergas | Senken, Keller und Täler gesondert betrachten; Nahbereich ist unterschätzt |
 | Schwachwind unter 1 m/s | Gefahrenbereich kreisförmig annehmen |
@@ -100,7 +131,7 @@ Beispiel Chlor, 30 kg/min, Wind 3 m/s, neutrale Schichtung, ohne Gelände: AEGL-
 - Die Wettervorhersage kann vom tatsächlichen Wind am Ort abweichen. Weicht die Stationsmessung oder eine eigene Messung deutlich ab, das Wetter von Hand vorgeben.
 - Die hinterlegten AEGL-Werte vor Verwendung mit der aktuellen AEGL-Liste abgleichen.
 - Die Brandwerte (Brandleistung, Rußausbeute) sind grobe Richtwerte.
-- Die Auflösung beträgt 1/120 der Breite des Rechengebiets, bei ± 5 km also rund 80 m. Für den Nahbereich ein kleineres Rechengebiet wählen.
+- Die Auflösung hängt vom Rechengebiet ab (siehe „Rechengebiet und Prognosedauer"). Für den Nahbereich ein kleineres Rechengebiet wählen.
 
 ## Rechenmodell
 
@@ -109,6 +140,7 @@ Beispiel Chlor, 30 kg/min, Wind 3 m/s, neutrale Schichtung, ohne Gelände: AEGL-
 - Schichtung nach Pasquill/Turner, Zunahme des Windes mit der Höhe über ein Potenzgesetz.
 - Aufstieg der Brandfahne nach Briggs aus der Brandleistung.
 - Je Zeitfenster wird der höchste Wert aus drei Momentaufnahmen (alle 5 Minuten) gezeigt.
+- Vegetationsbrand: Die Feuerfront breitet sich als Ellipse in Windrichtung aus (je stärker der Wind, desto gestreckter). Die Brennstofffeuchte wird aus Temperatur und Luftfeuchte bestimmt (Simard), Niederschlag bremst zusätzlich. Die Ankunftszeit der Front wird Zelle für Zelle über das Raster berechnet.
 
 ## Datenquellen
 
