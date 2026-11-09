@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ausbreitung">
+<meta name="theme-color" content="#0b5c7a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Ausbreitungsprognose Gefahrstoff und Brandrauch</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+/* Layout: Karte ist die Hauptfläche, Zeitleiste direkt darunter, Eingaben in einer Spalte (mobil unten, Desktop links). */
+:root{
+  --bg:#eef1f3; --panel:#ffffff; --ink:#16232b; --muted:#5b6b75; --line:#d3dade;
+  --accent:#0b5c7a; --accent-ink:#ffffff; --warn-bg:#fff4d6; --warn-ink:#6b4a00;
+  --l1:#f2c700; --l2:#f07d00; --l3:#d1001f;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#10171b; --panel:#1a2429; --ink:#e6edf0; --muted:#9aabb5; --line:#33424a;
+    --accent:#4fb3d6; --accent-ink:#06222d; --warn-bg:#3d3212; --warn-ink:#ffe08a; color-scheme:dark;}
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--font)}
+#app{display:flex;flex-direction:column;min-height:100%}
+header{padding:calc(10px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 10px calc(16px + env(safe-area-inset-left));background:var(--accent);color:var(--accent-ink);display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+header h1{font-size:17px;margin:0;font-weight:650}
+header span{font-size:12.5px;opacity:.9}
+#mapwrap{position:relative;height:50vh;height:50dvh;min-height:300px}
+#map{position:absolute;inset:0;background:#cfd8dc}
+#hint{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:800;background:var(--panel);color:var(--ink);
+  padding:6px 12px;border-radius:16px;font-size:13px;border:1px solid var(--line);max-width:calc(100% - 110px);text-align:center;pointer-events:none}
+#timeline{background:var(--panel);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-direction:column;gap:8px}
+#timeline[hidden]{display:none}
+.tl-row{display:flex;align-items:center;gap:8px}
+.tl-row input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
+#slotlabel{font-weight:650;font-variant-numeric:tabular-nums}
+#slotinfo{font-size:13.5px;display:grid;gap:4px}
+.reach{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:13px;font-variant-numeric:tabular-nums}
+.sw{width:12px;height:12px;border-radius:2px;display:inline-block;flex:none}
+.arrow{display:inline-block;font-weight:700;transition:transform .3s}
+main{padding:12px calc(16px + env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));display:grid;gap:12px;align-content:start}
+section{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:10px}
+section h2{font-size:13px;margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+label{display:grid;gap:3px;font-size:13px;color:var(--muted)}
+input,select,button{font:inherit;font-size:16px;color:var(--ink);touch-action:manipulation}
+body{-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
+input[type=text],input[type=number],input[type=datetime-local],select{width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.inline{display:flex;gap:8px}
+.inline>input{flex:1}
+button{padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:650;padding:12px;font-size:16px}
+button:disabled{opacity:.55;cursor:wait}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:var(--bg)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);font-weight:650}
+.check{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:14px}
+.check input{width:18px;height:18px;accent-color:var(--accent)}
+.small{font-size:12.5px;color:var(--muted)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.warn{background:var(--warn-bg);color:var(--warn-ink);border-radius:6px;padding:8px 10px;font-size:13px}
+.warn ul{margin:0;padding-left:18px}
+#status{font-size:13px;color:var(--muted);min-height:1.2em}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600}
+tbody tr{cursor:pointer}
+tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.srcicon{width:18px;height:18px;border-radius:50%;background:#111;border:3px solid #fff;box-shadow:0 0 0 2px #d1001f}
+[hidden]{display:none!important}
+@media (min-width:900px){
+  #app{display:grid;grid-template-columns:400px 1fr;grid-template-rows:auto auto 1fr;height:100%}
+  header{grid-column:1/3}
+  main{grid-column:1;grid-row:2/4;overflow-y:auto}
+  #mapwrap{grid-column:2;grid-row:3;height:auto}
+  #timeline{grid-column:2;grid-row:2}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<header><h1>Ausbreitungsprognose</h1><span>Gefahrstoff und Brandrauch · Wetter live · Gelände · 15-Minuten-Zeitfenster</span></header>
+
+<div id="mapwrap"><div id="map"></div><div id="hint">Karte antippen: Freisetzungsort setzen</div></div>
+
+<div id="timeline" hidden>
+  <div class="tl-row">
+    <button id="prev" aria-label="Vorheriges Zeitfenster">◀</button>
+    <input type="range" id="slider" min="0" max="1" value="0" step="1" aria-label="Zeitfenster">
+    <button id="next" aria-label="Nächstes Zeitfenster">▶</button>
+    <button id="play">Abspielen</button>
+  </div>
+  <div id="slotlabel"></div>
+  <div id="slotinfo"></div>
+</div>
+
+<main>
+  <section>
+    <h2>1 · Freisetzungsort</h2>
+    <div class="inline"><input type="text" id="q" placeholder="Adresse oder Ort suchen" aria-label="Adresse suchen"><button id="search">Suchen</button></div>
+    <div class="inline"><button id="gps">Mein Standort</button><span id="coords" class="small mono" style="align-self:center">noch kein Ort gewählt</span></div>
+    <div id="terrinfo" class="small"></div>
+  </section>
+
+  <section>
+    <h2>2 · Szenario</h2>
+    <div class="seg"><button id="modeGas" aria-pressed="true">Gefahrstoff (Gas)</button><button id="modeFire" aria-pressed="false">Brandrauch</button></div>
+
+    <div id="gasBox" style="display:grid;gap:10px">
+      <label>Stoff<select id="subst"></select></label>
+      <div id="customBox" class="row" hidden>
+        <label>Molare Masse g/mol<input type="number" id="cM" value="50" min="2" step="0.1"></label>
+      </div>
+      <div class="seg"><button id="relCont" aria-pressed="true">kontinuierlich</button><button id="relInst" aria-pressed="false">schlagartig</button></div>
+      <div class="row">
+        <label id="lblRate">Austrittsrate kg/min<input type="number" id="rate" value="30" min="0" step="1"></label>
+        <label id="lblDur">Dauer min<input type="number" id="dur" value="30" min="1" step="1"></label>
+        <label id="lblMass" hidden>Masse kg<input type="number" id="mass" value="500" min="0" step="10"></label>
+        <label>Austrittshöhe m<input type="number" id="hrel" value="1" min="0" step="1"></label>
+      </div>
+    </div>
+
+    <div id="fireBox" style="display:none;gap:10px">
+      <label>Brandobjekt<select id="firePreset">
+        <option value="5">Pkw-Brand (ca. 5 MW)</option>
+        <option value="15">Dachstuhl / Wohngebäude (ca. 15 MW)</option>
+        <option value="30">Lkw / Bus (ca. 30 MW)</option>
+        <option value="100" selected>Lagerhalle (ca. 100 MW)</option>
+        <option value="300">Industrie-Großbrand (ca. 300 MW)</option>
+      </select></label>
+      <div class="row">
+        <label>Brandleistung MW<input type="number" id="mw" value="100" min="0.5" step="1"></label>
+        <label>Brandfläche m²<input type="number" id="farea" value="400" min="1" step="10"></label>
+        <label>Branddauer min<input type="number" id="fdur" value="120" min="1" step="5"></label>
+      </div>
+      <label>Brandgut<select id="fuel">
+        <option value="17,0.015">Holz, Papier (wenig Ruß)</option>
+        <option value="22,0.05" selected>Mischbrand Gebäude / Lager</option>
+        <option value="35,0.10">Kunststoff, Reifen, Öl (viel Ruß)</option>
+      </select></label>
+    </div>
+
+    <div class="row">
+      <label><span id="t1l">Schwelle 1</span><input type="number" id="thr1" step="any" min="0"></label>
+      <label><span id="t2l">Schwelle 2</span><input type="number" id="thr2" step="any" min="0"></label>
+      <label><span id="t3l">Schwelle 3</span><input type="number" id="thr3" step="any" min="0"></label>
+    </div>
+    <div id="thrnote" class="small"></div>
+
+    <div class="row">
+      <label>Umgebung<select id="urban"><option value="0">Freies Gelände</option><option value="1">Bebauung / Stadt</option></select></label>
+      <label>Rechengebiet<select id="radius"><option value="1000">± 1 km</option><option value="2000">± 2 km</option><option value="5000" selected>± 5 km</option><option value="10000">± 10 km</option><option value="20000">± 20 km</option></select></label>
+      <label>Prognosedauer<select id="horizon"><option value="4">1 h</option><option value="8">2 h</option><option value="12" selected>3 h</option><option value="16">4 h</option><option value="24">6 h</option></select></label>
+    </div>
+  </section>
+
+  <section>
+    <h2>3 · Zeit und Wetter</h2>
+    <div class="inline"><input type="datetime-local" id="t0" aria-label="Ereignisbeginn"><button id="now">Jetzt</button></div>
+    <div id="wxinfo" class="small">Wetterdaten werden geladen, sobald ein Ort gewählt ist.</div>
+    <div id="obsinfo" class="small"></div>
+    <label class="check"><input type="checkbox" id="manual">Wetter von Hand vorgeben (Messung vor Ort, Übung)</label>
+    <div id="manBox" class="row" hidden>
+      <label>Wind aus Grad<input type="number" id="mdir" value="270" min="0" max="360" step="5"></label>
+      <label>Wind m/s<input type="number" id="mspd" value="3" min="0" step="0.5"></label>
+      <label>Schichtung<select id="mcls"><option value="0">A sehr labil</option><option value="1">B labil</option><option value="2">C leicht labil</option><option value="3" selected>D neutral</option><option value="4">E stabil</option><option value="5">F sehr stabil</option></select></label>
+      <label>Temperatur °C<input type="number" id="mtemp" value="10" step="1"></label>
+    </div>
+  </section>
+
+  <button class="primary" id="run">Prognose berechnen</button>
+  <div id="status" role="status"></div>
+  <div id="warnings" class="warn" hidden></div>
+
+  <section id="tablesec" hidden>
+    <h2>Zeittabelle</h2>
+    <div class="tablewrap"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+    <div class="small">Reichweite: größte Entfernung vom Freisetzungsort, in der die Schwelle im Zeitfenster überschritten wird. Zeile antippen zeigt das Zeitfenster auf der Karte.</div>
+  </section>
+
+  <section>
+    <h2>Modell und Grenzen</h2>
+    <div class="small">
+      Gauß-Wolkenmodell (Lagrange-Puffs, alle 30 s) mit Briggs-Ausbreitungsparametern, Schichtung nach Pasquill/Turner aus Wind, Globalstrahlung und Bewölkung, Windprofil mit der Höhe, Brandüberhöhung nach Briggs. Gelände: Windumlenkung an Hängen, Kaltluftabfluss bei stabiler Schichtung, hangabwärts fließende Schwergase und Auftreffen der Fahne auf höheres Gelände, jeweils als vereinfachte Korrektur.<br><br>
+      Datenquellen: Open-Meteo (DWD ICON-D2, 15-Minuten-Werte), Bright Sky (DWD-Stationsmessung), Höhendaten Mapzen/AWS Terrain Tiles oder Open-Meteo (Copernicus DEM), Karten OpenTopoMap und OpenStreetMap, Suche Nominatim.<br><br>
+      <strong>Nur Orientierungshilfe.</strong> Das Ergebnis ersetzt keine Messungen vor Ort, keine Fachberatung (z. B. TUIS, Fachberater Chemie) und keine zugelassenen Programme. Schwergase, Aerosole, chemische Umwandlung, Niederschlag, Gebäudeumströmung und kleinräumige Talwinde sind nicht oder nur grob erfasst. Die voreingestellten Schwellenwerte vor Verwendung mit der aktuellen AEGL-Liste abgleichen.
+    </div>
+  </section>
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
+<script id="model">
+/* ===================== Rechenmodell (ohne DOM) ===================== */
+const GRAV = 9.81;
+const PEXP_R = [0.07,0.07,0.10,0.15,0.35,0.55];
+const PEXP_U = [0.15,0.15,0.20,0.25,0.30,0.30];
+const DEFL   = [0,0,0.1,0.3,0.6,0.8];        // Anteil der Hangaufwärts-Komponente, der umgelenkt wird
+const TFOLLOW= [0.5,0.5,0.5,0.5,0,0];        // Geländefolge der Fahnenachse
+const ZI_DEF = [1500,1200,1000,800,0,0];     // Mischungsschichthöhe, falls keine Daten
+
+// Pasquill-Klasse 0..5 (A..F) nach Turner; Zwischenklassen zur stabileren Seite
+function stabClass(u, rad, cloudPct){
+  const b = u<2?0 : u<3?1 : u<5?2 : u<6?3 : 4;
+  if (rad > 20){
+    if (rad < 100) return 3;
+    const ins = rad>=600?0 : rad>=300?1 : 2;
+    return [[0,1,1],[1,1,2],[1,2,2],[2,3,3],[2,3,3]][b][ins];
+  }
+  if (cloudPct >= 95) return u<2 ? 4 : 3;
+  const clear = cloudPct < 50 ? 1 : 0;
+  return [[4,5],[4,5],[3,4],[3,3],[3,3]][b][clear];
+}
+
+// Briggs-Ausbreitungsparameter [sigma_y, sigma_z] in m für Laufweg x in m
+function sigma(cls, x, urban){
+  x = Math.max(x, 1);
+  let sy, sz;
+  if (urban){
+    const fy = 1/Math.sqrt(1+0.0004*x);
+    if (cls<=1){ sy=0.32*x*fy; sz=0.24*x*Math.sqrt(1+0.001*x); }
+    else if (cls===2){ sy=0.22*x*fy; sz=0.20*x; }
+    else if (cls===3){ sy=0.16*x*fy; sz=0.14*x/Math.sqrt(1+0.0003*x); }
+    else { sy=0.11*x*fy; sz=0.08*x/Math.sqrt(1+0.0015*x); }
+  } else {
+    const fy = 1/Math.sqrt(1+0.0001*x);
+    switch(cls){
+      case 0: sy=0.22*x*fy; sz=0.20*x; break;
+      case 1: sy=0.16*x*fy; sz=0.12*x; break;
+      case 2: sy=0.11*x*fy; sz=0.08*x/Math.sqrt(1+0.0002*x); break;
+      case 3: sy=0.08*x*fy; sz=0.06*x/Math.sqrt(1+0.0015*x); break;
+      case 4: sy=0.06*x*fy; sz=0.03*x/(1+0.0003*x); break;
+      default: sy=0.04*x*fy; sz=0.016*x/(1+0.0003*x);
+    }
+  }
+  return [sy, Math.min(sz, 5000)];
+}
+
+function bil(T, arr, x, y){
+  const N=T.N; let fx=(x+T.R)/T.cell, fy=(y+T.R)/T.cell;
+  fx=Math.min(Math.max(fx,0),N-1.001); fy=Math.min(Math.max(fy,0),N-1.001);
+  const i=Math.floor(fx), j=Math.floor(fy), a=fx-i, b=fy-j, k=j*N+i;
+  return arr[k]*(1-a)*(1-b)+arr[k+1]*a*(1-b)+arr[k+N]*(1-a)*b+arr[k+N+1]*a*b;
+}
+
+// Geglättete Gradienten des Geländes
+function prepTerrain(T){
+  const N=T.N, r=Math.max(1,Math.round(250/T.cell));
+  const tmp=new Float32Array(N*N), sm=new Float32Array(N*N);
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){let s=0,c=0;for(let d=-r;d<=r;d++){const ii=i+d;if(ii>=0&&ii<N){s+=T.h[j*N+ii];c++;}}tmp[j*N+i]=s/c;}
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){let s=0,c=0;for(let d=-r;d<=r;d++){const jj=j+d;if(jj>=0&&jj<N){s+=tmp[jj*N+i];c++;}}sm[j*N+i]=s/c;}
+  T.gx=new Float32Array(N*N); T.gy=new Float32Array(N*N);
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+    const i0=Math.max(i-1,0), i1=Math.min(i+1,N-1), j0=Math.max(j-1,0), j1=Math.min(j+1,N-1);
+    T.gx[j*N+i]=(sm[j*N+i1]-sm[j*N+i0])/((i1-i0)*T.cell);
+    T.gy[j*N+i]=(sm[j1*N+i]-sm[j0*N+i])/((j1-j0)*T.cell);
+  }
+  T.hsrc=bil(T,T.h,0,0);
+  let mn=Infinity,mx=-Infinity; for(const v of T.h){if(v<mn)mn=v;if(v>mx)mx=v;} T.min=mn; T.max=mx;
+  return T;
+}
+
+function terrainWind(T, x, y, vx, vy, cls, dense, s, hagl, u10){
+  const gx=bil(T,T.gx,x,y), gy=bil(T,T.gy,x,y), S=Math.hypot(gx,gy);
+  if (S<0.005) return [vx,vy];
+  const wH=Math.exp(-hagl/150), nx=gx/S, ny=gy/S;
+  const a=Math.min(0.9, DEFL[cls]+(dense?0.2*Math.exp(-s/3000):0))*Math.min(1,S/0.1)*wH;
+  const sp=Math.hypot(vx,vy), c=vx*nx+vy*ny;
+  if (c>0 && a>0){
+    vx-=a*c*nx; vy-=a*c*ny;
+    const n=Math.hypot(vx,vy);
+    if (n>0.2*sp){ vx*=sp/n; vy*=sp/n; }
+  }
+  let d=0;
+  if (cls>=4 && u10<3) d+=(cls===5?1:0.5)*(1-u10/3)*Math.min(1.5,8*S);   // Kaltluftabfluss
+  if (dense) d+=Math.min(1,5*S)*Math.exp(-s/1500);                        // Schwergas hangabwärts
+  d*=wH;
+  return [vx-d*nx, vy-d*ny];
+}
+
+function plumeRiseFinal(F, u, cls, Tk, zi, H0){
+  if (F<=0) return 0;
+  u=Math.max(u,1);
+  let dh;
+  if (cls<=3){
+    dh = F<55 ? 21.425*Math.pow(F,0.75)/u : 38.71*Math.pow(F,0.6)/u;
+    if (zi>0) dh=Math.min(dh, Math.max(zi-H0,10));
+  } else {
+    const s=GRAV/Tk*(cls===4?0.02:0.035);
+    dh=2.6*Math.cbrt(F/(u*s));
+  }
+  return Math.min(dh,1500);
+}
+
+/* P: {nSlots, inst, massKg, rateKgS, durS, H0, sy0, sz0, fireMW (konvektiv), dense, urban, terrain|null, R, wx(tSec)}
+   wx(t) -> {u10, dx, dy, cls, zi, Tk}   (dx,dy: Einheitsvektor, wohin der Wind weht)
+   Rückgabe: Momentaufnahmen alle 5 min */
+function trackPuffs(P){
+  const dt=30, tEnd=P.nSlots*900, snaps=[], T=P.terrain, F=8.8*(P.fireMW||0);
+  let puffs=[];
+  for(let t=0;t<=tEnd;t+=dt){
+    const w=P.wx(t), u10=Math.max(w.u10,0.5);
+    if (P.inst ? t===0 : t<P.durS)
+      puffs.push({x:0,y:0,s:0,sy:P.sy0,sz:P.sz0,m:P.inst?P.massKg:P.rateKgS*dt,dh:0,ex:w.dx,ey:w.dy,L:0});
+    if (t>0 && t%300===0) snaps.push({t, cls:w.cls, zi:w.zi, puffs:puffs.map(p=>({...p}))});
+    if (t>=tEnd) break;
+    const pe=(P.urban?PEXP_U:PEXP_R)[w.cls];
+    const dhFin=plumeRiseFinal(F,u10,w.cls,w.Tk,w.zi,P.H0);
+    for(const p of puffs){
+      const Hp=P.H0+p.dh;
+      const sp=u10*Math.min(2.5,Math.pow(Math.max(Hp,10)/10,pe));
+      let vx=w.dx*sp, vy=w.dy*sp;
+      if (T) [vx,vy]=terrainWind(T,p.x,p.y,vx,vy,w.cls,P.dense,p.s,Hp,u10);
+      const v=Math.hypot(vx,vy)||0.1, ds=v*dt;
+      const a=sigma(w.cls,p.s,P.urban), b=sigma(w.cls,p.s+ds,P.urban);
+      p.sy+=b[0]-a[0]; p.sz+=b[1]-a[1];
+      p.x+=vx*dt; p.y+=vy*dt; p.s+=ds;
+      p.ex=vx/v; p.ey=vy/v; p.L=P.inst?0:ds;
+      if (F>0) p.dh=Math.max(p.dh, Math.min(dhFin, 1.6*Math.cbrt(F)*Math.pow(p.s,2/3)/sp));
+    }
+    const lim=P.R;
+    puffs=puffs.filter(p=>Math.abs(p.x)<lim+4*p.sy && Math.abs(p.y)<lim+4*p.sy);
+  }
+  return snaps;
+}
+
+// Bodennahe Konzentration (kg/m³) auf dem Raster N x N, Zeile j von Süd nach Nord
+function evalField(snap, P, N){
+  const R=P.R, cell=2*R/(N-1), out=new Float32Array(N*N), T=P.terrain;
+  const lid=snap.cls<=3 && snap.zi>0, zi=snap.zi, tf=TFOLLOW[snap.cls];
+  for(const p of snap.puffs){
+    const Hp=P.H0+p.dh, b=p.dh/3.5;
+    const sc=Math.max(Math.hypot(p.sy,b),0.5*cell);
+    const sa=Math.hypot(sc,p.L/3.464);
+    const sz=Math.max(Math.hypot(p.sz,b),0.5);
+    const half=3.5*sa;
+    const i0=Math.max(0,Math.ceil((p.x-half+R)/cell)), i1=Math.min(N-1,Math.floor((p.x+half+R)/cell));
+    const j0=Math.max(0,Math.ceil((p.y-half+R)/cell)), j1=Math.min(N-1,Math.floor((p.y+half+R)/cell));
+    if (i0>i1||j0>j1) continue;
+    const k=p.m/(6.2832*sa*sc), qa=1/(2*sa*sa), qc=1/(2*sc*sc), qz=1/(2*sz*sz), mixed=lid&&sz>1.6*zi;
+    for(let j=j0;j<=j1;j++){
+      const dy=-R+j*cell-p.y;
+      for(let i=i0;i<=i1;i++){
+        const dx=-R+i*cell-p.x;
+        const al=dx*p.ex+dy*p.ey, cr=dy*p.ex-dx*p.ey;
+        const q=al*al*qa+cr*cr*qc;
+        if (q>6.2) continue;
+        let d=Hp;
+        if (Hp>1 && T){ const rise=T.h[j*N+i]-T.hsrc; if (rise>0) d=Math.max(0,Hp-(1-tf)*rise); }
+        let vz;
+        if (mixed) vz=1/zi;
+        else {
+          vz=2*Math.exp(-d*d*qz);
+          if (lid){ const e=2*zi-d; vz+=2*Math.exp(-e*e*qz); }
+          vz/=2.5066*sz;
+        }
+        out[j*N+i]+=k*Math.exp(-q)*vz;
+      }
+    }
+  }
+  return out;
+}
+if (typeof module!=='undefined') module.exports={stabClass,sigma,trackPuffs,evalField,prepTerrain,plumeRiseFinal};
+</script>
+
+<script>
+/* ===================== Oberfläche ===================== */
+const $=id=>document.getElementById(id);
+const NGRID=121;
+const SUBST=[
+  {id:'cl2', name:'Chlor', M:70.9, lv:[0.5,2,20], kind:'aegl'},
+  {id:'nh3', name:'Ammoniak', M:17.03, lv:[30,160,1100], kind:'aegl'},
+  {id:'so2', name:'Schwefeldioxid', M:64.07, lv:[0.2,0.75,30], kind:'aegl'},
+  {id:'h2s', name:'Schwefelwasserstoff', M:34.08, lv:[0.51,27,50], kind:'aegl'},
+  {id:'hcl', name:'Chlorwasserstoff', M:36.46, lv:[1.8,22,100], kind:'aegl'},
+  {id:'hf',  name:'Fluorwasserstoff', M:20.01, lv:[1,24,44], kind:'aegl'},
+  {id:'hcn', name:'Cyanwasserstoff (Blausäure)', M:27.03, lv:[2,7.1,15], kind:'aegl'},
+  {id:'co',  name:'Kohlenmonoxid', M:28.01, lv:[null,83,330], kind:'aegl'},
+  {id:'no2', name:'Stickstoffdioxid', M:46.01, lv:[0.5,12,20], kind:'aegl'},
+  {id:'cocl2',name:'Phosgen', M:98.92, lv:[null,0.3,0.75], kind:'aegl'},
+  {id:'hcho',name:'Formaldehyd', M:30.03, lv:[0.9,14,56], kind:'aegl'},
+  {id:'c3h8',name:'Propan (Explosionsgefahr)', M:44.1, lv:[1700,8500,17000], kind:'ueg'},
+  {id:'ch4', name:'Methan / Erdgas (Explosionsgefahr)', M:16.04, lv:[4400,22000,44000], kind:'ueg'},
+  {id:'custom',name:'Eigener Stoff', M:50, lv:[1,10,100], kind:'custom'}
+];
+const LNAMES={aegl:['AEGL-1','AEGL-2','AEGL-3'],ueg:['10 % UEG','50 % UEG','UEG'],custom:['Schwelle 1','Schwelle 2','Schwelle 3'],fire:['Stufe 1','Stufe 2','Stufe 3']};
+const LCOL=[[242,199,0],[240,125,0],[209,0,31]];
+const CLS='ABCDEF', CLSTXT=['sehr labil','labil','leicht labil','neutral','stabil','sehr stabil'];
+const COMPASS=['N','NNO','NO','ONO','O','OSO','SO','SSO','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+const S={src:null, wx:null, wxKey:'', obs:null, terr:null, terrKey:'', res:null, slot:0, overlay:null, timer:null, mode:'gas', inst:false, marker:null};
+
+const fmt=(v,d=1)=>v.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
+const hhmm=ts=>new Date(ts*1000).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+const dist=m=>m<=0?'–':m<1000?Math.round(m/10)*10+' m':fmt(m/1000,1)+' km';
+function status(t){ $('status').textContent=t; }
+
+/* ---------- Karte ---------- */
+let map=null;
+if (window.L){
+  map=L.map('map').setView([51.1,10.3],6);
+  const otm=L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'Kartendaten © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende, SRTM | Darstellung © <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)'});
+  const osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende'});
+  otm.addTo(map);
+  L.control.layers({'OpenTopoMap (Gelände)':otm,'OpenStreetMap':osm},null,{position:'topright'}).addTo(map);
+  L.control.scale({imperial:false}).addTo(map);
+  map.on('click',e=>setSource(e.latlng.lat,e.latlng.lng,false));
+} else {
+  $('hint').textContent='Karte konnte nicht geladen werden (Internetverbindung prüfen)';
+}
+
+function setSource(lat,lon,zoom){
+  S.src={lat,lon};
+  $('hint').hidden=true;
+  $('coords').textContent=lat.toFixed(5)+'° N, '+lon.toFixed(5)+'° O';
+  if (map){
+    if (!S.marker){
+      S.marker=L.marker([lat,lon],{draggable:true,icon:L.divIcon({className:'',html:'<div class="srcicon"></div>',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);
+      S.marker.on('dragend',()=>{const p=S.marker.getLatLng(); setSource(p.lat,p.lng,false);});
+    } else S.marker.setLatLng([lat,lon]);
+    if (zoom || map.getZoom()<11) map.setView([lat,lon],Math.max(map.getZoom(),13));
+  }
+  $('terrinfo').textContent='';
+  loadWeather().then(showWx).catch(e=>{$('wxinfo').textContent='Wetterdaten nicht abrufbar: '+e.message;});
+  loadObs();
+}
+
+$('search').onclick=async()=>{
+  const q=$('q').value.trim(); if(!q) return;
+  status('Suche Ort …');
+  try{
+    const r=await fetchJSON('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q));
+    if(!r.length){ status('Kein Ort gefunden. Schreibweise prüfen oder Karte antippen.'); return; }
+    status(r[0].display_name);
+    setSource(+r[0].lat,+r[0].lon,true);
+  }catch(e){ status('Ortssuche nicht erreichbar: '+e.message); }
+};
+$('q').addEventListener('keydown',e=>{ if(e.key==='Enter') $('search').click(); });
+$('gps').onclick=()=>{
+  if(!navigator.geolocation){ status('Standortbestimmung wird vom Browser nicht unterstützt.'); return; }
+  status('Bestimme Standort …');
+  navigator.geolocation.getCurrentPosition(p=>{status(''); setSource(p.coords.latitude,p.coords.longitude,true);},
+    e=>status('Standort nicht verfügbar ('+e.message+'). Ort suchen oder Karte antippen.'),{enableHighAccuracy:true,timeout:10000});
+};
+
+/* ---------- Szenario-Eingaben ---------- */
+const sel=$('subst');
+SUBST.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.appendChild(o);});
+function curSubst(){ return SUBST.find(s=>s.id===sel.value); }
+function fillThresholds(){
+  let names, lv, note;
+  if (S.mode==='fire'){
+    names=LNAMES.fire; lv=[0.05,0.5,5];
+    note='Rauchpartikel in mg/m³. Orientierungswerte, keine amtlichen Grenzwerte: Stufe 1 Geruch und Belästigung, Stufe 2 Fenster und Türen schließen, Stufe 3 dichte Verrauchung mit Sichtbehinderung.';
+  } else {
+    const s=curSubst(); names=LNAMES[s.kind]; lv=s.lv;
+    note=s.kind==='aegl'?'Werte in ppm, AEGL für 60 Minuten Einwirkzeit. Leeres Feld: kein Wert festgelegt.'
+        :s.kind==='ueg'?'Werte in ppm, bezogen auf die untere Explosionsgrenze. Örtliche Spitzen können deutlich über dem berechneten Mittel liegen.'
+        :'Eigene Schwellen in ppm.';
+    $('customBox').hidden=s.kind!=='custom';
+  }
+  ['t1l','t2l','t3l'].forEach((id,i)=>$(id).textContent=names[i]);
+  ['thr1','thr2','thr3'].forEach((id,i)=>$(id).value=lv[i]==null?'':lv[i]);
+  $('thrnote').textContent=note;
+}
+sel.onchange=fillThresholds;
+function setMode(m){
+  S.mode=m;
+  $('modeGas').setAttribute('aria-pressed',m==='gas'); $('modeFire').setAttribute('aria-pressed',m==='fire');
+  $('gasBox').style.display=m==='gas'?'grid':'none'; $('fireBox').style.display=m==='fire'?'grid':'none';
+  fillThresholds();
+}
+$('modeGas').onclick=()=>setMode('gas'); $('modeFire').onclick=()=>setMode('fire');
+function setRel(inst){
+  S.inst=inst;
+  $('relCont').setAttribute('aria-pressed',!inst); $('relInst').setAttribute('aria-pressed',inst);
+  $('lblRate').hidden=inst; $('lblDur').hidden=inst; $('lblMass').hidden=!inst;
+}
+$('relCont').onclick=()=>setRel(false); $('relInst').onclick=()=>setRel(true);
+$('firePreset').onchange=()=>{$('mw').value=$('firePreset').value;};
+$('manual').onchange=()=>{$('manBox').hidden=!$('manual').checked;};
+function setNow(){ const d=new Date(); d.setSeconds(0,0); $('t0').value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16); }
+$('now').onclick=()=>{setNow(); showWx();};
+$('t0').onchange=showWx;
+setNow(); fillThresholds();
+
+/* ---------- Wetter ---------- */
+async function fetchJSON(url){
+  const r=await fetch(url);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+async function loadWeather(){
+  const {lat,lon}=S.src, key=lat.toFixed(3)+','+lon.toFixed(3);
+  if (S.wx && S.wxKey===key && Date.now()-S.wx.fetched<10*60000) return S.wx;
+  const base=`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&wind_speed_unit=ms&timeformat=unixtime&timezone=GMT&past_days=1&forecast_days=3`;
+  const v='temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,shortwave_radiation,precipitation';
+  const variants=[
+    base+'&minutely_15='+v+'&hourly=cloud_cover,surface_pressure,boundary_layer_height',
+    base+'&minutely_15='+v+'&hourly=cloud_cover,surface_pressure',
+    base+'&hourly='+v+',cloud_cover,surface_pressure'];
+  let d=null, err=null;
+  for(const u of variants){ try{ d=await fetchJSON(u); if(d&&(d.minutely_15||d.hourly)) break; d=null; }catch(e){ err=e; } }
+  if(!d) throw err||new Error('keine Daten');
+  const m=d.minutely_15||d.hourly, h=d.hourly||{};
+  const n=m.time.length, U=new Float32Array(n), V=new Float32Array(n);
+  for(let i=0;i<n;i++){
+    const sp=m.wind_speed_10m[i]??0, dir=(m.wind_direction_10m[i]??0)*Math.PI/180;
+    U[i]=-sp*Math.sin(dir); V[i]=-sp*Math.cos(dir);
+  }
+  S.wx={fetched:Date.now(), step15:!!d.minutely_15, elev:d.elevation, t:m.time, U, V, spd:m.wind_speed_10m, gust:m.wind_gusts_10m,
+        rad:m.shortwave_radiation, temp:m.temperature_2m, prec:m.precipitation,
+        th:h.time, cloud:h.cloud_cover, pres:h.surface_pressure, blh:h.boundary_layer_height};
+  S.wxKey=key;
+  return S.wx;
+}
+function lin(t,v,ts){
+  if(!t||!v||!t.length) return NaN;
+  const n=t.length;
+  if(ts<=t[0]) return v[0]??NaN;
+  if(ts>=t[n-1]) return v[n-1]??NaN;
+  const step=t[1]-t[0], i=Math.min(n-2,Math.floor((ts-t[0])/step)), f=(ts-t[i])/step, a=v[i], b=v[i+1];
+  if(a==null||Number.isNaN(a)) return b??NaN;
+  if(b==null||Number.isNaN(b)) return a;
+  return a+(b-a)*f;
+}
+function wxAt(ts){
+  let o;
+  if ($('manual').checked){
+    const dir=(+$('mdir').value||0)*Math.PI/180, sp=Math.max(0,+$('mspd').value||0), cls=+$('mcls').value;
+    o={u10:sp, U:-Math.sin(dir), V:-Math.cos(dir), gust:NaN, rad:NaN, cloud:NaN, T:+$('mtemp').value||10, prec:0, pres:1013, zi:ZI_DEF[cls], cls, manual:true};
+  } else {
+    const W=S.wx;
+    o={u10:lin(W.t,W.spd,ts), U:lin(W.t,W.U,ts), V:lin(W.t,W.V,ts), gust:lin(W.t,W.gust,ts), rad:lin(W.t,W.rad,ts)||0,
+       T:lin(W.t,W.temp,ts), prec:lin(W.t,W.prec,ts)||0, cloud:lin(W.th,W.cloud,ts), pres:lin(W.th,W.pres,ts), blh:lin(W.th,W.blh,ts)};
+    if(Number.isNaN(o.cloud)) o.cloud=50;
+    if(Number.isNaN(o.pres)) o.pres=1013;
+    if(Number.isNaN(o.T)) o.T=10;
+    o.u10=o.u10||0;
+    o.cls=stabClass(o.u10,o.rad,o.cloud);
+    o.zi=o.cls<=3 ? (o.blh>50?o.blh:ZI_DEF[o.cls]) : 0;
+  }
+  const n=Math.hypot(o.U,o.V);
+  if(n>1e-6){ o.dx=o.U/n; o.dy=o.V/n; } else { o.dx=1; o.dy=0; }
+  o.dir=(Math.atan2(-o.dx,-o.dy)*180/Math.PI+360)%360;
+  o.Tk=o.T+273.15;
+  return o;
+}
+function t0sec(){ const d=new Date($('t0').value); return Math.floor(d.getTime()/1000); }
+function windText(w){
+  return `aus ${Math.round(w.dir)}° (${COMPASS[Math.round(w.dir/22.5)%16]}) mit ${fmt(w.u10)} m/s`+(w.gust>0?`, Böen ${fmt(w.gust)} m/s`:'');
+}
+function showWx(){
+  if(!S.wx||!S.src) return;
+  const ts=t0sec(), W=S.wx;
+  if(!(ts>=W.t[0] && ts<=W.t[W.t.length-1])){ $('wxinfo').textContent='Für diesen Zeitpunkt liegen keine Wetterdaten vor (verfügbar: gestern bis übermorgen).'; return; }
+  const w=wxAt(ts);
+  $('wxinfo').innerHTML=`<strong>Vorhersage ${hhmm(ts)} Uhr</strong> (Open-Meteo, ${W.step15?'15-Minuten-Werte':'Stundenwerte, interpoliert'}): Wind ${windText(w)}, ${fmt(w.T)} °C, Bewölkung ${Math.round(w.cloud)} %, Strahlung ${Math.round(w.rad)} W/m², Niederschlag ${fmt(w.prec)} mm. Schichtung <strong>${CLS[w.cls]}</strong> (${CLSTXT[w.cls]})`+(w.zi?`, Mischungsschicht ${Math.round(w.zi)} m.`:'.');
+}
+async function loadObs(){
+  $('obsinfo').textContent='';
+  try{
+    const {lat,lon}=S.src;
+    const d=await fetchJSON(`https://api.brightsky.dev/current_weather?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`);
+    const w=d.weather, s=(d.sources||[])[0]||{};
+    if(!w||w.wind_speed_10==null) return;
+    const t=Math.floor(new Date(w.timestamp).getTime()/1000);
+    $('obsinfo').innerHTML=`<strong>Messung ${hhmm(t)} Uhr</strong>, DWD-Station ${s.station_name||''}${s.distance?' ('+fmt(s.distance/1000,1)+' km entfernt)':''}: Wind aus ${w.wind_direction_10}° mit ${fmt(w.wind_speed_10/3.6)} m/s`+(w.wind_gust_speed_10!=null?`, Böen ${fmt(w.wind_gust_speed_10/3.6)} m/s`:'')+`, ${fmt(w.temperature)} °C. Weicht die Messung deutlich von der Vorhersage ab, Wetter von Hand vorgeben.`;
+  }catch(e){ /* außerhalb des DWD-Gebiets oder Dienst nicht erreichbar */ }
+}
+
+/* ---------- Gelände ---------- */
+function loadImg(url){
+  return new Promise((res,rej)=>{
+    const im=new Image(); im.crossOrigin='anonymous';
+    const to=setTimeout(()=>rej(new Error('Zeitüberschreitung')),10000);
+    im.onload=()=>{clearTimeout(to);res(im);}; im.onerror=()=>{clearTimeout(to);rej(new Error('Kachel nicht ladbar'));};
+    im.src=url;
+  });
+}
+function nodeLatLon(lat,lon,R,N,i,j){
+  const cell=2*R/(N-1);
+  return [lat+(-R+j*cell)/111320, lon+(-R+i*cell)/(111320*Math.cos(lat*Math.PI/180))];
+}
+async function terrTiles(lat,lon,R,N){
+  const cosl=Math.cos(lat*Math.PI/180);
+  let z=Math.floor(Math.log2(40075016*cosl/(2*R))); z=Math.max(5,Math.min(14,z));
+  const n=2**z;
+  const px=lo=>(lo+180)/360*n, py=la=>{const r=la*Math.PI/180; return (1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n;};
+  const [latS,lonW]=nodeLatLon(lat,lon,R,N,0,0), [latN,lonE]=nodeLatLon(lat,lon,R,N,N-1,N-1);
+  const x0=Math.floor(px(lonW)), x1=Math.floor(px(lonE)), y0=Math.floor(py(latN)), y1=Math.floor(py(latS));
+  const cv=document.createElement('canvas'); cv.width=(x1-x0+1)*256; cv.height=(y1-y0+1)*256;
+  const cx=cv.getContext('2d',{willReadFrequently:true});
+  const jobs=[];
+  for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++)
+    jobs.push(loadImg(`https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`).then(im=>cx.drawImage(im,(x-x0)*256,(y-y0)*256)));
+  await Promise.all(jobs);
+  const D=cx.getImageData(0,0,cv.width,cv.height).data, Wd=cv.width, Hd=cv.height;
+  const hAt=(ix,iy)=>{ix=Math.min(Math.max(ix,0),Wd-1);iy=Math.min(Math.max(iy,0),Hd-1);const k=(iy*Wd+ix)*4;return D[k]*256+D[k+1]+D[k+2]/256-32768;};
+  const h=new Float32Array(N*N);
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+    const [la,lo]=nodeLatLon(lat,lon,R,N,i,j);
+    const fx=(px(lo)-x0)*256-0.5, fy=(py(la)-y0)*256-0.5, ix=Math.floor(fx), iy=Math.floor(fy), a=fx-ix, b=fy-iy;
+    h[j*N+i]=hAt(ix,iy)*(1-a)*(1-b)+hAt(ix+1,iy)*a*(1-b)+hAt(ix,iy+1)*(1-a)*b+hAt(ix+1,iy+1)*a*b;
+  }
+  return {h,src:'Terrain Tiles (Mapzen/AWS), Auflösung ca. '+Math.round(40075016*cosl/n/256)+' m'};
+}
+async function terrApi(lat,lon,R,N){
+  const M=21, pts=[];
+  for(let j=0;j<M;j++)for(let i=0;i<M;i++) pts.push(nodeLatLon(lat,lon,R,M,i,j));
+  const c=new Float32Array(M*M);
+  for(let k=0;k<pts.length;k+=100){
+    const part=pts.slice(k,k+100);
+    const d=await fetchJSON('https://api.open-meteo.com/v1/elevation?latitude='+part.map(p=>p[0].toFixed(5)).join(',')+'&longitude='+part.map(p=>p[1].toFixed(5)).join(','));
+    d.elevation.forEach((e,q)=>c[k+q]=e);
+  }
+  const Tc={N:M,R,cell:2*R/(M-1)}, cell=2*R/(N-1), h=new Float32Array(N*N);
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++) h[j*N+i]=bil(Tc,c,-R+i*cell,-R+j*cell);
+  return {h,src:'Open-Meteo Höhen-API (Copernicus DEM), grobes Raster '+Math.round(2*R/(M-1))+' m'};
+}
+async function loadTerrain(R){
+  const {lat,lon}=S.src, key=[lat.toFixed(5),lon.toFixed(5),R].join();
+  if(S.terr&&S.terrKey===key) return S.terr;
+  let r=null;
+  try{ r=await terrTiles(lat,lon,R,NGRID); }catch(e){ try{ r=await terrApi(lat,lon,R,NGRID); }catch(e2){ r=null; } }
+  S.terrKey=key;
+  if(!r){ S.terr=null; $('terrinfo').textContent='Höhendaten nicht abrufbar. Es wird ohne Geländeeinfluss gerechnet.'; return null; }
+  S.terr=prepTerrain({N:NGRID,R,cell:2*R/(NGRID-1),h:r.h});
+  $('terrinfo').textContent=`Gelände: Freisetzungsort ${Math.round(S.terr.hsrc)} m ü. NN, Rechengebiet ${Math.round(S.terr.min)} bis ${Math.round(S.terr.max)} m. Quelle: ${r.src}.`;
+  return S.terr;
+}
+
+/* ---------- Berechnung ---------- */
+const pause=()=>new Promise(r=>setTimeout(r,0));
+function num(id,def){ const v=parseFloat($(id).value); return Number.isFinite(v)?v:def; }
+
+async function run(){
+  if(!S.src){ status('Zuerst den Freisetzungsort wählen: Karte antippen, Ort suchen oder Standort verwenden.'); return; }
+  const btn=$('run'); btn.disabled=true; stopPlay();
+  try{
+    const manual=$('manual').checked, R=+$('radius').value, nSlots=+$('horizon').value, T0=t0sec();
+    if(!Number.isFinite(T0)) throw new Error('Ereignisbeginn fehlt.');
+    if(!manual){
+      status('Lade Wetterdaten …'); await loadWeather(); showWx();
+      const W=S.wx;
+      if(T0<W.t[0]||T0+nSlots*900>W.t[W.t.length-1]) throw new Error('Für den gewählten Zeitraum liegen keine Wetterdaten vor. Ereignisbeginn anpassen oder Wetter von Hand vorgeben.');
+    }
+    status('Lade Höhendaten …'); const terr=await loadTerrain(R);
+
+    const w0=wxAt(T0);
+    const P={nSlots,R,terrain:terr,urban:$('urban').value==='1',wx:t=>wxAt(T0+t),fireMW:0,dense:false,sz0:1};
+    let M, unit, names, label;
+    if(S.mode==='fire'){
+      const mw=num('mw',10), [hc,ys]=$('fuel').value.split(',').map(Number);
+      P.inst=false; P.rateKgS=mw/hc*ys; P.durS=num('fdur',60)*60; P.H0=2; P.fireMW=0.7*mw;
+      P.sy0=Math.max(2,Math.sqrt(num('farea',100))/4.3); P.sz0=2;
+      unit='mg/m³'; names=LNAMES.fire; label='Brandrauch, '+mw+' MW';
+    } else {
+      const s=curSubst(); M=s.kind==='custom'?num('cM',50):s.M;
+      P.inst=S.inst; P.H0=num('hrel',1); P.dense=M/28.96>1.15;
+      const rho=M/(22.414*w0.Tk/273.15*1013.25/w0.pres);
+      if(S.inst){ P.massKg=num('mass',0); P.sy0=Math.max(2,0.5*Math.cbrt(P.massKg/rho)); P.sz0=Math.max(1,P.sy0/2); P.durS=0; }
+      else { P.rateKgS=num('rate',0)/60; P.durS=num('dur',30)*60; P.sy0=2; }
+      unit='ppm'; names=LNAMES[s.kind]; label=s.name;
+    }
+    // Schwellen in kg/m³
+    const vm=22.414*w0.Tk/273.15*1013.25/w0.pres;
+    const thrIn=['thr1','thr2','thr3'].map(id=>{const v=parseFloat($(id).value); return v>0?v:null;});
+    const thr=thrIn.map(v=>v==null?null:(unit==='ppm'?v*M/vm:v)*1e-6);
+    if(thr.every(v=>v==null)) throw new Error('Mindestens einen Schwellenwert angeben.');
+
+    status('Berechne Ausbreitung …'); await pause();
+    const snaps=trackPuffs(P);
+    const N=NGRID, cell=2*R/(N-1), slots=[], env=new Float32Array(N*N);
+    for(let n=1;n<=nSlots;n++){
+      status(`Berechne Zeitfenster ${n} von ${nSlots} …`); await pause();
+      const f=new Float32Array(N*N);
+      for(const sn of snaps) if(sn.t>(n-1)*900 && sn.t<=n*900){
+        const g=evalField(sn,P,N);
+        for(let k=0;k<f.length;k++) if(g[k]>f[k]) f[k]=g[k];
+      }
+      for(let k=0;k<f.length;k++) if(f[k]>env[k]) env[k]=f[k];
+      slots.push({n, t0:T0+(n-1)*900, t1:T0+n*900, w:wxAt(T0+n*900-450), ...analyse(f,thr,N,R,cell), img:render(f,thr,N)});
+    }
+    const all={n:0, t0:T0, t1:T0+nSlots*900, total:true, ...analyse(env,thr,N,R,cell), img:render(env,thr,N)};
+    S.res={slots,all,thr,thrIn,unit,names,label,R,lat:S.src.lat,lon:S.src.lon,T0,nSlots};
+    warnings(P,slots,all,terr,manual);
+    buildTable(); $('timeline').hidden=false; $('tablesec').hidden=false;
+    $('slider').max=nSlots; show(0);
+    if(map){
+      const b=boundsOf(S.res);
+      map.fitBounds(all.reach.some(r=>r>0)?L.latLngBounds(b).pad(-0.5+Math.min(0.5,Math.max(...all.reach)/R*0.55)):b);
+    }
+    status(`Fertig: ${label}, Beginn ${hhmm(T0)} Uhr, ${nSlots} Zeitfenster zu je 15 Minuten.`);
+  }catch(e){ status('Fehler: '+e.message); console.error(e); }
+  btn.disabled=false;
+}
+$('run').onclick=run;
+
+function analyse(f,thr,N,R,cell){
+  const reach=[0,0,0], area=[0,0,0]; let max=0, edge=false;
+  const low=thr.find(v=>v!=null);
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+    const c=f[j*N+i]; if(c>max) max=c;
+    if(c<low) continue;
+    if(i===0||j===0||i===N-1||j===N-1) edge=true;
+    const d=Math.hypot(-R+i*cell,-R+j*cell);
+    for(let l=0;l<3;l++) if(thr[l]!=null&&c>=thr[l]){ area[l]+=cell*cell; if(d>reach[l]) reach[l]=d; }
+  }
+  for(let l=0;l<3;l++) if(area[l]>0&&reach[l]<cell) reach[l]=cell;
+  return {reach,area,max,edge};
+}
+function render(f,thr,N){
+  const K=3, M=(N-1)*K+1, cv=document.createElement('canvas'); cv.width=cv.height=M;
+  const cx=cv.getContext('2d'), im=cx.createImageData(M,M), D=im.data;
+  for(let r=0;r<M;r++){
+    const fy=(M-1-r)/K, j=Math.min(N-2,Math.floor(fy)), b=fy-j;
+    for(let c=0;c<M;c++){
+      const fx=c/K, i=Math.min(N-2,Math.floor(fx)), a=fx-i, k=j*N+i;
+      const v=f[k]*(1-a)*(1-b)+f[k+1]*a*(1-b)+f[k+N]*(1-a)*b+f[k+N+1]*a*b;
+      let l=-1; for(let q=0;q<3;q++) if(thr[q]!=null&&v>=thr[q]) l=q;
+      if(l<0) continue;
+      const o=(r*M+c)*4; D[o]=LCOL[l][0]; D[o+1]=LCOL[l][1]; D[o+2]=LCOL[l][2]; D[o+3]=[125,145,165][l];
+    }
+  }
+  cx.putImageData(im,0,0);
+  return cv.toDataURL('image/png');
+}
+function boundsOf(r){
+  const dLat=r.R/111320, dLon=r.R/(111320*Math.cos(r.lat*Math.PI/180));
+  return [[r.lat-dLat,r.lon-dLon],[r.lat+dLat,r.lon+dLon]];
+}
+
+function warnings(P,slots,all,terr,manual){
+  const w=[];
+  if(all.edge) w.push('Die Gefahrenzone erreicht den Rand des Rechengebiets. Rechengebiet vergrößern.');
+  if(!all.reach.some(r=>r>0)) w.push('Keine Schwelle wird am Boden überschritten. Bei Brandrauch kann die Fahne über das Gebiet hinwegziehen und weiter entfernt oder an höher gelegenem Gelände auftreffen.');
+  if(P.dense) w.push('Schwergas: Die Wolke breitet sich in Bodennähe flach aus und sammelt sich in Senken, Kellern und Tälern. Nahbereich und Tieflagen sind im Modell unterschätzt.');
+  if(slots.some(s=>s.w.u10<1)) w.push('Schwachwind unter 1 m/s: Windrichtung unzuverlässig, Ausbreitung in alle Richtungen möglich. Gefahrenbereich kreisförmig annehmen.');
+  if(slots.some(s=>s.w.prec>0.1)) w.push('Niederschlag im Prognosezeitraum: Auswaschung und Rauchniederschlag sind nicht berücksichtigt.');
+  if(slots.some(s=>s.w.gust>2*Math.max(s.w.u10,1))) w.push('Starke Böen: Die Fahne pendelt, seitliche Zonen großzügiger ansetzen.');
+  if(!terr) w.push('Ohne Höhendaten gerechnet: kein Geländeeinfluss.');
+  if(manual) w.push('Wetter von Hand vorgegeben: Wind und Schichtung bleiben über alle Zeitfenster gleich.');
+  const el=$('warnings'); el.hidden=!w.length; el.innerHTML='<ul>'+w.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+}
+
+/* ---------- Anzeige ---------- */
+function thrLabel(l){ const r=S.res; return r.names[l]+' ('+r.thrIn[l].toLocaleString('de-DE')+' '+r.unit+')'; }
+function show(idx){
+  const r=S.res; if(!r) return;
+  S.slot=idx; $('slider').value=idx;
+  const s=idx===0?r.all:r.slots[idx-1];
+  if(map){
+    if(S.overlay) map.removeLayer(S.overlay);
+    S.overlay=L.imageOverlay(s.img,boundsOf(r),{opacity:1,interactive:false}).addTo(map);
+  }
+  $('slotlabel').textContent=idx===0
+    ? `Gesamtbereich ${hhmm(r.T0)} bis ${hhmm(s.t1)} Uhr (alle Zeitfenster)`
+    : `${hhmm(s.t0)} bis ${hhmm(s.t1)} Uhr · T+${idx*15} min`;
+  let h='';
+  if(idx>0){ const w=s.w; h+=`<div><span class="arrow" style="transform:rotate(${w.dir}deg)">↓</span> Wind ${windText(w)} · Schichtung ${CLS[w.cls]} (${CLSTXT[w.cls]})${w.manual?'':' · '+fmt(w.T)+' °C'}</div>`; }
+  h+='<div class="reach">';
+  for(let l=2;l>=0;l--) if(r.thr[l]!=null)
+    h+=`<span class="chip"><span class="sw" style="background:var(--l${l+1})"></span>${thrLabel(l)}: ${s.reach[l]>0?'bis '+dist(s.reach[l])+', '+fmt(s.area[l]/1e6,2)+' km²':'nicht erreicht'}</span>`;
+  h+='</div>';
+  $('slotinfo').innerHTML=h;
+  document.querySelectorAll('#tbody tr').forEach((tr,i)=>tr.classList.toggle('on',i===idx));
+}
+function buildTable(){
+  const r=S.res, lv=[0,1,2].filter(l=>r.thr[l]!=null);
+  $('thead').innerHTML='<tr><th>Zeitfenster</th><th>Wind</th><th>Kl.</th>'+lv.map(l=>'<th>'+r.names[l]+'</th>').join('')+'</tr>';
+  const row=(s,first,w)=>'<tr><td>'+first+'</td><td>'+(w?Math.round(w.dir)+'° / '+fmt(w.u10)+' m/s':'')+'</td><td>'+(w?CLS[w.cls]:'')+'</td>'+lv.map(l=>'<td>'+dist(s.reach[l])+'</td>').join('')+'</tr>';
+  $('tbody').innerHTML=row(r.all,'Gesamt',null)+r.slots.map(s=>row(s,hhmm(s.t0)+'–'+hhmm(s.t1),s.w)).join('');
+  document.querySelectorAll('#tbody tr').forEach((tr,i)=>tr.onclick=()=>{stopPlay();show(i);});
+}
+$('slider').oninput=e=>{stopPlay();show(+e.target.value);};
+$('prev').onclick=()=>{stopPlay();show(Math.max(0,S.slot-1));};
+$('next').onclick=()=>{stopPlay();show(Math.min(S.res.nSlots,S.slot+1));};
+function stopPlay(){ if(S.timer){clearInterval(S.timer);S.timer=null;} $('play').textContent='Abspielen'; }
+$('play').onclick=()=>{
+  if(S.timer){ stopPlay(); return; }
+  $('play').textContent='Stopp';
+  if(S.slot>=S.res.nSlots||S.slot===0) show(1);
+  S.timer=setInterval(()=>{ if(S.slot>=S.res.nSlots){ stopPlay(); return; } show(S.slot+1); },900);
+};
+if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
