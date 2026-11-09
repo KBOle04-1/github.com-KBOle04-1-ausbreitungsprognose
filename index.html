@@ -46,6 +46,11 @@ header span{font-size:12.5px;opacity:.9}
 .reach{display:flex;flex-wrap:wrap;gap:6px}
 .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:13px;font-variant-numeric:tabular-nums}
 .sw{width:12px;height:12px;border-radius:2px;display:inline-block;flex:none}
+.sw.h1{background:repeating-linear-gradient(45deg,#7d8590 0 3px,transparent 3px 6px)}
+.sw.h2{background:repeating-linear-gradient(45deg,#5b4b9a 0 3px,transparent 3px 6px)}
+.sw.h3{background:repeating-linear-gradient(45deg,#1f1440 0 3px,transparent 3px 6px)}
+.grp{font-weight:650;font-size:13px}
+.subhead{font-weight:650;font-size:14px;color:var(--ink)}
 .arrow{display:inline-block;font-weight:700;transition:transform .3s}
 main{padding:12px calc(16px + env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));display:grid;gap:12px;align-content:start}
 section{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:10px}
@@ -62,7 +67,8 @@ button{padding:8px 12px;border:1px solid var(--line);border-radius:6px;backgroun
 button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:650;padding:12px;font-size:16px}
 button:disabled{opacity:.55;cursor:wait}
 .seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:6px;overflow:hidden}
-.seg button{border:0;border-radius:0;background:var(--bg)}
+.seg.three{grid-template-columns:1fr 1fr 1fr}
+.seg button{border:0;border-radius:0;background:var(--bg);padding:9px 4px}
 .seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);font-weight:650}
 .check{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:14px}
 .check input{width:18px;height:18px;accent-color:var(--accent)}
@@ -116,9 +122,11 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
 
   <section>
     <h2>2 · Szenario</h2>
-    <div class="seg"><button id="modeGas" aria-pressed="true">Gefahrstoff (Gas)</button><button id="modeFire" aria-pressed="false">Brandrauch</button></div>
+    <div class="seg three"><button id="modeGas" aria-pressed="true">Gefahrstoff</button><button id="modeFire" aria-pressed="false">Brandrauch</button><button id="modeCombo" aria-pressed="false">Kombiniert</button></div>
+    <div id="comboNote" class="small" hidden>Kombiniert: Gefahrstoff und Brandrauch werden vom selben Ort aus gerechnet und gemeinsam auf der Karte gezeigt. Gefahrstoff als Farbfläche, Brandrauch schraffiert.</div>
 
     <div id="gasBox" style="display:grid;gap:10px">
+      <div class="subhead combo" hidden>Gefahrstoff</div>
       <label>Stoff<select id="subst"></select></label>
       <div id="customBox" class="row" hidden>
         <label>Molare Masse g/mol<input type="number" id="cM" value="50" min="2" step="0.1"></label>
@@ -130,9 +138,11 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
         <label id="lblMass" hidden>Masse kg<input type="number" id="mass" value="500" min="0" step="10"></label>
         <label>Austrittshöhe m<input type="number" id="hrel" value="1" min="0" step="1"></label>
       </div>
+      <label class="check combo" hidden><input type="checkbox" id="lift" checked>Stoff wird im Brand freigesetzt und steigt mit dem Rauch auf</label>
     </div>
 
     <div id="fireBox" style="display:none;gap:10px">
+      <div class="subhead combo" hidden>Brand</div>
       <label>Brandobjekt<select id="firePreset">
         <option value="5">Pkw-Brand (ca. 5 MW)</option>
         <option value="15">Dachstuhl / Wohngebäude (ca. 15 MW)</option>
@@ -158,12 +168,22 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
       <label><span id="t3l">Schwelle 3</span><input type="number" id="thr3" step="any" min="0"></label>
     </div>
     <div id="thrnote" class="small"></div>
+    <div id="fthrBox" class="combo" hidden style="display:grid;gap:10px">
+      <div class="row">
+        <label>Rauch Stufe 1 mg/m³<input type="number" id="fthr1" step="any" min="0" value="0.05"></label>
+        <label>Rauch Stufe 2 mg/m³<input type="number" id="fthr2" step="any" min="0" value="0.5"></label>
+        <label>Rauch Stufe 3 mg/m³<input type="number" id="fthr3" step="any" min="0" value="5"></label>
+      </div>
+      <div class="small">Rauchpartikel, Orientierungswerte, keine amtlichen Grenzwerte.</div>
+    </div>
 
     <div class="row">
-      <label>Umgebung<select id="urban"><option value="0">Freies Gelände</option><option value="1">Bebauung / Stadt</option></select></label>
+      <label>Umgebung<select id="urban"><option value="0">Freifläche</option><option value="1">Bebauung</option></select></label>
       <label>Rechengebiet<select id="radius"><option value="1000">± 1 km</option><option value="2000">± 2 km</option><option value="5000" selected>± 5 km</option><option value="10000">± 10 km</option><option value="20000">± 20 km</option></select></label>
       <label>Prognosedauer<select id="horizon"><option value="4">1 h</option><option value="8">2 h</option><option value="12" selected>3 h</option><option value="16">4 h</option><option value="24">6 h</option></select></label>
     </div>
+    <div id="urbnote" class="small"></div>
+    <label class="check"><input type="checkbox" id="useTerr" checked>Gelände (Topographie) berücksichtigen</label>
   </section>
 
   <section>
@@ -466,9 +486,9 @@ function fillThresholds(){
     note='Rauchpartikel in mg/m³. Orientierungswerte, keine amtlichen Grenzwerte: Stufe 1 Geruch und Belästigung, Stufe 2 Fenster und Türen schließen, Stufe 3 dichte Verrauchung mit Sichtbehinderung.';
   } else {
     const s=curSubst(); names=LNAMES[s.kind]; lv=s.lv;
-    note=s.kind==='aegl'?'Werte in ppm, AEGL für 60 Minuten Einwirkzeit. Leeres Feld: kein Wert festgelegt.'
+    note=(S.mode==='combo'?'Gefahrstoff: ':'')+(s.kind==='aegl'?'Werte in ppm, AEGL für 60 Minuten Einwirkzeit. Leeres Feld: kein Wert festgelegt.'
         :s.kind==='ueg'?'Werte in ppm, bezogen auf die untere Explosionsgrenze. Örtliche Spitzen können deutlich über dem berechneten Mittel liegen.'
-        :'Eigene Schwellen in ppm.';
+        :'Eigene Schwellen in ppm.');
     $('customBox').hidden=s.kind!=='custom';
   }
   ['t1l','t2l','t3l'].forEach((id,i)=>$(id).textContent=names[i]);
@@ -478,11 +498,18 @@ function fillThresholds(){
 sel.onchange=fillThresholds;
 function setMode(m){
   S.mode=m;
-  $('modeGas').setAttribute('aria-pressed',m==='gas'); $('modeFire').setAttribute('aria-pressed',m==='fire');
-  $('gasBox').style.display=m==='gas'?'grid':'none'; $('fireBox').style.display=m==='fire'?'grid':'none';
+  $('modeGas').setAttribute('aria-pressed',m==='gas'); $('modeFire').setAttribute('aria-pressed',m==='fire'); $('modeCombo').setAttribute('aria-pressed',m==='combo');
+  $('gasBox').style.display=m!=='fire'?'grid':'none'; $('fireBox').style.display=m!=='gas'?'grid':'none';
+  document.querySelectorAll('.combo').forEach(e=>e.hidden=m!=='combo'); $('comboNote').hidden=m!=='combo';
   fillThresholds();
 }
-$('modeGas').onclick=()=>setMode('gas'); $('modeFire').onclick=()=>setMode('fire');
+$('modeGas').onclick=()=>setMode('gas'); $('modeFire').onclick=()=>setMode('fire'); $('modeCombo').onclick=()=>setMode('combo');
+function urbNote(){
+  $('urbnote').innerHTML=$('urban').value==='1'
+   ? '<strong>Bebauung:</strong> Ortslage, Stadt, Gewerbegebiet. Gebäude verwirbeln die Luft stark. Die Wolke wird schnell breiter und höher durchmischt, die Konzentration fällt rascher ab: kürzere Reichweite, dafür breiterer Streifen. Straßenschluchten, Stau hinter Gebäuden und Eindringen in Häuser sind nicht erfasst.'
+   : '<strong>Freifläche:</strong> Felder, Wiesen, Wald, einzelne Gebäude. Wenig Verwirbelung. Die Wolke bleibt schmal und bodennah konzentriert: größere Reichweite, schmalerer Streifen. Im Zweifel diese Einstellung wählen, sie liegt bei der Reichweite auf der sicheren Seite.';
+}
+$('urban').onchange=urbNote; urbNote();
 function setRel(inst){
   S.inst=inst;
   $('relCont').setAttribute('aria-pressed',!inst); $('relInst').setAttribute('aria-pressed',inst);
@@ -645,6 +672,7 @@ async function loadTerrain(R){
 /* ---------- Berechnung ---------- */
 const pause=()=>new Promise(r=>setTimeout(r,0));
 function num(id,def){ const v=parseFloat($(id).value); return Number.isFinite(v)?v:def; }
+const HCOL=[[125,133,144],[91,75,154],[31,20,64]];
 
 async function run(){
   if(!S.src){ status('Zuerst den Freisetzungsort wählen: Karte antippen, Ort suchen oder Standort verwenden.'); return; }
@@ -657,53 +685,56 @@ async function run(){
       const W=S.wx;
       if(T0<W.t[0]||T0+nSlots*900>W.t[W.t.length-1]) throw new Error('Für den gewählten Zeitraum liegen keine Wetterdaten vor. Ereignisbeginn anpassen oder Wetter von Hand vorgeben.');
     }
-    status('Lade Höhendaten …'); const terr=await loadTerrain(R);
+    let terr=null;
+    if($('useTerr').checked){ status('Lade Höhendaten …'); terr=await loadTerrain(R); }
 
-    const w0=wxAt(T0);
-    const P={nSlots,R,terrain:terr,urban:$('urban').value==='1',wx:t=>wxAt(T0+t),fireMW:0,dense:false,sz0:1};
-    let M, unit, names, label;
-    if(S.mode==='fire'){
-      const mw=num('mw',10), [hc,ys]=$('fuel').value.split(',').map(Number);
-      P.inst=false; P.rateKgS=mw/hc*ys; P.durS=num('fdur',60)*60; P.H0=2; P.fireMW=0.7*mw;
-      P.sy0=Math.max(2,Math.sqrt(num('farea',100))/4.3); P.sz0=2;
-      unit='mg/m³'; names=LNAMES.fire; label='Brandrauch, '+mw+' MW';
-    } else {
-      const s=curSubst(); M=s.kind==='custom'?num('cM',50):s.M;
+    const w0=wxAt(T0), vm=22.414*w0.Tk/273.15*1013.25/w0.pres, combo=S.mode==='combo';
+    const base={nSlots,R,terrain:terr,urban:$('urban').value==='1',wx:t=>wxAt(T0+t),fireMW:0,dense:false,sz0:1};
+    const readThr=ids=>ids.map(id=>{const v=parseFloat($(id).value); return v>0?v:null;});
+    const mw=num('mw',10), fsy=Math.max(2,Math.sqrt(num('farea',100))/4.3);
+    const defs=[];
+    if(S.mode!=='fire'){
+      const s=curSubst(), M=s.kind==='custom'?num('cM',50):s.M, P={...base};
       P.inst=S.inst; P.H0=num('hrel',1); P.dense=M/28.96>1.15;
-      const rho=M/(22.414*w0.Tk/273.15*1013.25/w0.pres);
+      const rho=M/vm;
       if(S.inst){ P.massKg=num('mass',0); P.sy0=Math.max(2,0.5*Math.cbrt(P.massKg/rho)); P.sz0=Math.max(1,P.sy0/2); P.durS=0; }
       else { P.rateKgS=num('rate',0)/60; P.durS=num('dur',30)*60; P.sy0=2; }
-      unit='ppm'; names=LNAMES[s.kind]; label=s.name;
+      if(combo&&$('lift').checked){ P.fireMW=0.7*mw; P.sy0=Math.max(P.sy0,fsy); P.sz0=Math.max(P.sz0,2); P.H0=Math.max(P.H0,2); P.dense=false; }
+      const thrIn=readThr(['thr1','thr2','thr3']);
+      defs.push({P,thrIn,thr:thrIn.map(v=>v==null?null:v*M/vm*1e-6),unit:'ppm',names:LNAMES[s.kind],label:s.name,hatch:false});
     }
-    // Schwellen in kg/m³
-    const vm=22.414*w0.Tk/273.15*1013.25/w0.pres;
-    const thrIn=['thr1','thr2','thr3'].map(id=>{const v=parseFloat($(id).value); return v>0?v:null;});
-    const thr=thrIn.map(v=>v==null?null:(unit==='ppm'?v*M/vm:v)*1e-6);
-    if(thr.every(v=>v==null)) throw new Error('Mindestens einen Schwellenwert angeben.');
+    if(S.mode!=='gas'){
+      const [hc,ys]=$('fuel').value.split(',').map(Number), P={...base};
+      P.inst=false; P.rateKgS=mw/hc*ys; P.durS=num('fdur',60)*60; P.H0=2; P.fireMW=0.7*mw; P.sy0=fsy; P.sz0=2;
+      const thrIn=readThr(combo?['fthr1','fthr2','fthr3']:['thr1','thr2','thr3']);
+      defs.push({P,thrIn,thr:thrIn.map(v=>v==null?null:v*1e-6),unit:'mg/m³',names:combo?['Rauch 1','Rauch 2','Rauch 3']:LNAMES.fire,label:'Brandrauch '+mw+' MW',hatch:combo});
+    }
+    for(const d of defs) if(d.thr.every(v=>v==null)) throw new Error('Für '+d.label+' mindestens einen Schwellenwert angeben.');
 
-    status('Berechne Ausbreitung …'); await pause();
-    const snaps=trackPuffs(P);
-    const N=NGRID, cell=2*R/(N-1), slots=[], env=new Float32Array(N*N);
-    for(let n=1;n<=nSlots;n++){
-      status(`Berechne Zeitfenster ${n} von ${nSlots} …`); await pause();
-      const f=new Float32Array(N*N);
-      for(const sn of snaps) if(sn.t>(n-1)*900 && sn.t<=n*900){
-        const g=evalField(sn,P,N);
-        for(let k=0;k<f.length;k++) if(g[k]>f[k]) f[k]=g[k];
+    const N=NGRID, cell=2*R/(N-1), meta=[];
+    for(let n=1;n<=nSlots;n++) meta.push({n,t0:T0+(n-1)*900,t1:T0+n*900,w:wxAt(T0+n*900-450)});
+    for(const d of defs){
+      status('Berechne Ausbreitung: '+d.label+' …'); await pause();
+      const snaps=trackPuffs(d.P), env=new Float32Array(N*N); d.slots=[];
+      for(let n=1;n<=nSlots;n++){
+        status(`${d.label}: Zeitfenster ${n} von ${nSlots} …`); await pause();
+        const f=new Float32Array(N*N);
+        for(const sn of snaps) if(sn.t>(n-1)*900 && sn.t<=n*900){
+          const g=evalField(sn,d.P,N);
+          for(let k=0;k<f.length;k++) if(g[k]>f[k]) f[k]=g[k];
+        }
+        for(let k=0;k<f.length;k++) if(f[k]>env[k]) env[k]=f[k];
+        d.slots.push({...analyse(f,d.thr,N,R,cell), img:render(f,d.thr,N,d.hatch)});
       }
-      for(let k=0;k<f.length;k++) if(f[k]>env[k]) env[k]=f[k];
-      slots.push({n, t0:T0+(n-1)*900, t1:T0+n*900, w:wxAt(T0+n*900-450), ...analyse(f,thr,N,R,cell), img:render(f,thr,N)});
+      d.all={...analyse(env,d.thr,N,R,cell), img:render(env,d.thr,N,d.hatch)};
     }
-    const all={n:0, t0:T0, t1:T0+nSlots*900, total:true, ...analyse(env,thr,N,R,cell), img:render(env,thr,N)};
-    S.res={slots,all,thr,thrIn,unit,names,label,R,lat:S.src.lat,lon:S.src.lon,T0,nSlots};
-    warnings(P,slots,all,terr,manual);
+    S.res={layers:defs,meta,R,lat:S.src.lat,lon:S.src.lon,T0,nSlots,terr:!!terr};
+    warnings(defs,meta,terr,manual);
     buildTable(); $('timeline').hidden=false; $('tablesec').hidden=false;
     $('slider').max=nSlots; show(0);
-    if(map){
-      const b=boundsOf(S.res);
-      map.fitBounds(all.reach.some(r=>r>0)?L.latLngBounds(b).pad(-0.5+Math.min(0.5,Math.max(...all.reach)/R*0.55)):b);
-    }
-    status(`Fertig: ${label}, Beginn ${hhmm(T0)} Uhr, ${nSlots} Zeitfenster zu je 15 Minuten.`);
+    const far=Math.max(...defs.flatMap(d=>d.all.reach));
+    if(map){ const b=boundsOf(S.res); map.fitBounds(far>0?L.latLngBounds(b).pad(-0.5+Math.min(0.5,far/R*0.55)):b); }
+    status(`Fertig: ${defs.map(d=>d.label).join(' + ')}, Beginn ${hhmm(T0)} Uhr, ${nSlots} Zeitfenster zu je 15 Minuten.`);
   }catch(e){ status('Fehler: '+e.message); console.error(e); }
   btn.disabled=false;
 }
@@ -722,17 +753,18 @@ function analyse(f,thr,N,R,cell){
   for(let l=0;l<3;l++) if(area[l]>0&&reach[l]<cell) reach[l]=cell;
   return {reach,area,max,edge};
 }
-function render(f,thr,N){
+function render(f,thr,N,hatch){
   const K=3, M=(N-1)*K+1, cv=document.createElement('canvas'); cv.width=cv.height=M;
-  const cx=cv.getContext('2d'), im=cx.createImageData(M,M), D=im.data;
+  const cx=cv.getContext('2d'), im=cx.createImageData(M,M), D=im.data, col=hatch?HCOL:LCOL;
   for(let r=0;r<M;r++){
     const fy=(M-1-r)/K, j=Math.min(N-2,Math.floor(fy)), b=fy-j;
     for(let c=0;c<M;c++){
+      if(hatch && (r+c)%8>=3) continue;
       const fx=c/K, i=Math.min(N-2,Math.floor(fx)), a=fx-i, k=j*N+i;
       const v=f[k]*(1-a)*(1-b)+f[k+1]*a*(1-b)+f[k+N]*(1-a)*b+f[k+N+1]*a*b;
       let l=-1; for(let q=0;q<3;q++) if(thr[q]!=null&&v>=thr[q]) l=q;
       if(l<0) continue;
-      const o=(r*M+c)*4; D[o]=LCOL[l][0]; D[o+1]=LCOL[l][1]; D[o+2]=LCOL[l][2]; D[o+3]=[125,145,165][l];
+      const o=(r*M+c)*4; D[o]=col[l][0]; D[o+1]=col[l][1]; D[o+2]=col[l][2]; D[o+3]=hatch?215:[125,145,165][l];
     }
   }
   cx.putImageData(im,0,0);
@@ -743,46 +775,51 @@ function boundsOf(r){
   return [[r.lat-dLat,r.lon-dLon],[r.lat+dLat,r.lon+dLon]];
 }
 
-function warnings(P,slots,all,terr,manual){
+function warnings(defs,meta,terr,manual){
   const w=[];
-  if(all.edge) w.push('Die Gefahrenzone erreicht den Rand des Rechengebiets. Rechengebiet vergrößern.');
-  if(!all.reach.some(r=>r>0)) w.push('Keine Schwelle wird am Boden überschritten. Bei Brandrauch kann die Fahne über das Gebiet hinwegziehen und weiter entfernt oder an höher gelegenem Gelände auftreffen.');
-  if(P.dense) w.push('Schwergas: Die Wolke breitet sich in Bodennähe flach aus und sammelt sich in Senken, Kellern und Tälern. Nahbereich und Tieflagen sind im Modell unterschätzt.');
-  if(slots.some(s=>s.w.u10<1)) w.push('Schwachwind unter 1 m/s: Windrichtung unzuverlässig, Ausbreitung in alle Richtungen möglich. Gefahrenbereich kreisförmig annehmen.');
-  if(slots.some(s=>s.w.prec>0.1)) w.push('Niederschlag im Prognosezeitraum: Auswaschung und Rauchniederschlag sind nicht berücksichtigt.');
-  if(slots.some(s=>s.w.gust>2*Math.max(s.w.u10,1))) w.push('Starke Böen: Die Fahne pendelt, seitliche Zonen großzügiger ansetzen.');
-  if(!terr) w.push('Ohne Höhendaten gerechnet: kein Geländeeinfluss.');
+  if(defs.some(d=>d.all.edge)) w.push('Die Gefahrenzone erreicht den Rand des Rechengebiets. Rechengebiet vergrößern.');
+  for(const d of defs) if(!d.all.reach.some(r=>r>0)) w.push(d.label+': Keine Schwelle wird am Boden überschritten. Eine aufsteigende Fahne kann über das Gebiet hinwegziehen und weiter entfernt oder an höher gelegenem Gelände auftreffen.');
+  if(defs.some(d=>d.P.dense)) w.push('Schwergas: Die Wolke breitet sich in Bodennähe flach aus und sammelt sich in Senken, Kellern und Tälern. Nahbereich und Tieflagen sind im Modell unterschätzt.');
+  if(meta.some(s=>s.w.u10<1)) w.push('Schwachwind unter 1 m/s: Windrichtung unzuverlässig, Ausbreitung in alle Richtungen möglich. Gefahrenbereich kreisförmig annehmen.');
+  if(meta.some(s=>s.w.prec>0.1)) w.push('Niederschlag im Prognosezeitraum: Auswaschung und Rauchniederschlag sind nicht berücksichtigt.');
+  if(meta.some(s=>s.w.gust>2*Math.max(s.w.u10,1))) w.push('Starke Böen: Die Fahne pendelt, seitliche Zonen großzügiger ansetzen.');
+  if(!terr) w.push($('useTerr').checked?'Höhendaten nicht abrufbar: ohne Geländeeinfluss gerechnet.':'Gelände abgeschaltet: ohne Geländeeinfluss gerechnet.');
   if(manual) w.push('Wetter von Hand vorgegeben: Wind und Schichtung bleiben über alle Zeitfenster gleich.');
   const el=$('warnings'); el.hidden=!w.length; el.innerHTML='<ul>'+w.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
 }
 
 /* ---------- Anzeige ---------- */
-function thrLabel(l){ const r=S.res; return r.names[l]+' ('+r.thrIn[l].toLocaleString('de-DE')+' '+r.unit+')'; }
 function show(idx){
   const r=S.res; if(!r) return;
   S.slot=idx; $('slider').value=idx;
-  const s=idx===0?r.all:r.slots[idx-1];
   if(map){
-    if(S.overlay) map.removeLayer(S.overlay);
-    S.overlay=L.imageOverlay(s.img,boundsOf(r),{opacity:1,interactive:false}).addTo(map);
+    (S.overlays||[]).forEach(o=>map.removeLayer(o));
+    S.overlays=r.layers.map(d=>L.imageOverlay((idx===0?d.all:d.slots[idx-1]).img,boundsOf(r),{opacity:1,interactive:false}).addTo(map));
   }
+  const m=idx===0?null:r.meta[idx-1];
   $('slotlabel').textContent=idx===0
-    ? `Gesamtbereich ${hhmm(r.T0)} bis ${hhmm(s.t1)} Uhr (alle Zeitfenster)`
-    : `${hhmm(s.t0)} bis ${hhmm(s.t1)} Uhr · T+${idx*15} min`;
+    ? `Gesamtbereich ${hhmm(r.T0)} bis ${hhmm(r.T0+r.nSlots*900)} Uhr (alle Zeitfenster)`
+    : `${hhmm(m.t0)} bis ${hhmm(m.t1)} Uhr · T+${idx*15} min`;
   let h='';
-  if(idx>0){ const w=s.w; h+=`<div><span class="arrow" style="transform:rotate(${w.dir}deg)">↓</span> Wind ${windText(w)} · Schichtung ${CLS[w.cls]} (${CLSTXT[w.cls]})${w.manual?'':' · '+fmt(w.T)+' °C'}</div>`; }
-  h+='<div class="reach">';
-  for(let l=2;l>=0;l--) if(r.thr[l]!=null)
-    h+=`<span class="chip"><span class="sw" style="background:var(--l${l+1})"></span>${thrLabel(l)}: ${s.reach[l]>0?'bis '+dist(s.reach[l])+', '+fmt(s.area[l]/1e6,2)+' km²':'nicht erreicht'}</span>`;
-  h+='</div>';
+  if(m){ const w=m.w; h+=`<div><span class="arrow" style="transform:rotate(${w.dir}deg)">↓</span> Wind ${windText(w)} · Schichtung ${CLS[w.cls]} (${CLSTXT[w.cls]})${w.manual?'':' · '+fmt(w.T)+' °C'}</div>`; }
+  for(const d of r.layers){
+    const s=idx===0?d.all:d.slots[idx-1];
+    if(r.layers.length>1) h+='<div class="grp">'+d.label+'</div>';
+    h+='<div class="reach">';
+    for(let l=2;l>=0;l--) if(d.thr[l]!=null)
+      h+=`<span class="chip"><span class="sw${d.hatch?' h'+(l+1):''}"${d.hatch?'':` style="background:var(--l${l+1})"`}></span>${d.names[l]} (${d.thrIn[l].toLocaleString('de-DE')} ${d.unit}): ${s.reach[l]>0?'bis '+dist(s.reach[l])+', '+fmt(s.area[l]/1e6,2)+' km²':'nicht erreicht'}</span>`;
+    h+='</div>';
+  }
+  h+='<div class="small">Gelände: '+(r.terr?'berücksichtigt':'nicht berücksichtigt')+'</div>';
   $('slotinfo').innerHTML=h;
   document.querySelectorAll('#tbody tr').forEach((tr,i)=>tr.classList.toggle('on',i===idx));
 }
 function buildTable(){
-  const r=S.res, lv=[0,1,2].filter(l=>r.thr[l]!=null);
-  $('thead').innerHTML='<tr><th>Zeitfenster</th><th>Wind</th><th>Kl.</th>'+lv.map(l=>'<th>'+r.names[l]+'</th>').join('')+'</tr>';
-  const row=(s,first,w)=>'<tr><td>'+first+'</td><td>'+(w?Math.round(w.dir)+'° / '+fmt(w.u10)+' m/s':'')+'</td><td>'+(w?CLS[w.cls]:'')+'</td>'+lv.map(l=>'<td>'+dist(s.reach[l])+'</td>').join('')+'</tr>';
-  $('tbody').innerHTML=row(r.all,'Gesamt',null)+r.slots.map(s=>row(s,hhmm(s.t0)+'–'+hhmm(s.t1),s.w)).join('');
+  const r=S.res, cols=[];
+  r.layers.forEach(d=>[0,1,2].forEach(l=>{ if(d.thr[l]!=null) cols.push([d,l]); }));
+  $('thead').innerHTML='<tr><th>Zeitfenster</th><th>Wind</th><th>Kl.</th>'+cols.map(([d,l])=>'<th>'+d.names[l]+'</th>').join('')+'</tr>';
+  const row=(i,first,w)=>'<tr><td>'+first+'</td><td>'+(w?Math.round(w.dir)+'° / '+fmt(w.u10)+' m/s':'')+'</td><td>'+(w?CLS[w.cls]:'')+'</td>'+cols.map(([d,l])=>'<td>'+dist((i<0?d.all:d.slots[i]).reach[l])+'</td>').join('')+'</tr>';
+  $('tbody').innerHTML=row(-1,'Gesamt',null)+r.meta.map((m,i)=>row(i,hhmm(m.t0)+'–'+hhmm(m.t1),m.w)).join('');
   document.querySelectorAll('#tbody tr').forEach((tr,i)=>tr.onclick=()=>{stopPlay();show(i);});
 }
 $('slider').oninput=e=>{stopPlay();show(+e.target.value);};
