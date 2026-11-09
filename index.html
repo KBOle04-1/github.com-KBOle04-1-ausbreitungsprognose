@@ -215,7 +215,8 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
     <div class="small">
       Gauß-Wolkenmodell (Lagrange-Puffs, alle 30 s) mit Briggs-Ausbreitungsparametern, Schichtung nach Pasquill/Turner aus Wind, Globalstrahlung und Bewölkung, Windprofil mit der Höhe, Brandüberhöhung nach Briggs. Gelände: Windumlenkung an Hängen, Kaltluftabfluss bei stabiler Schichtung, hangabwärts fließende Schwergase und Auftreffen der Fahne auf höheres Gelände, jeweils als vereinfachte Korrektur.<br><br>
       Datenquellen: Open-Meteo (DWD ICON-D2, 15-Minuten-Werte), Bright Sky (DWD-Stationsmessung), Höhendaten Mapzen/AWS Terrain Tiles oder Open-Meteo (Copernicus DEM), Karten OpenTopoMap und OpenStreetMap, Suche Nominatim.<br><br>
-      <strong>Nur Orientierungshilfe.</strong> Das Ergebnis ersetzt keine Messungen vor Ort, keine Fachberatung (z. B. TUIS, Fachberater Chemie) und keine zugelassenen Programme. Schwergase, Aerosole, chemische Umwandlung, Niederschlag, Gebäudeumströmung und kleinräumige Talwinde sind nicht oder nur grob erfasst. Die voreingestellten Schwellenwerte vor Verwendung mit der aktuellen AEGL-Liste abgleichen.
+      <strong>Nur Orientierungshilfe.</strong> Das Ergebnis ersetzt keine Messungen vor Ort, keine Fachberatung (z. B. TUIS, Fachberater Chemie) und keine zugelassenen Programme. Schwergase, Aerosole, chemische Umwandlung, Niederschlag, Gebäudeumströmung und kleinräumige Talwinde sind nicht oder nur grob erfasst. Die voreingestellten Schwellenwerte vor Verwendung mit der aktuellen AEGL-Liste abgleichen.<br><br>
+      <a href="https://github.com/KBOle04-1/github.com-KBOle04-1-ausbreitungsprognose#readme">Hinweise zum Nachschlagen (Readme)</a>
     </div>
   </section>
 </main>
@@ -507,7 +508,7 @@ $('modeGas').onclick=()=>setMode('gas'); $('modeFire').onclick=()=>setMode('fire
 function urbNote(){
   $('urbnote').innerHTML=$('urban').value==='1'
    ? '<strong>Bebauung:</strong> Ortslage, Stadt, Gewerbegebiet. Gebäude verwirbeln die Luft stark. Die Wolke wird schnell breiter und höher durchmischt, die Konzentration fällt rascher ab: kürzere Reichweite, dafür breiterer Streifen. Straßenschluchten, Stau hinter Gebäuden und Eindringen in Häuser sind nicht erfasst.'
-   : '<strong>Freifläche:</strong> Felder, Wiesen, Wald, einzelne Gebäude. Wenig Verwirbelung. Die Wolke bleibt schmal und bodennah konzentriert: größere Reichweite, schmalerer Streifen. Im Zweifel diese Einstellung wählen, sie liegt bei der Reichweite auf der sicheren Seite.';
+   : '<strong>Freifläche:</strong> Felder, Wiesen, Wald, einzelne Gebäude. Wenig Verwirbelung. Die Wolke bleibt schmal und bodennah konzentriert: größere Reichweite, schmalerer Streifen. Bei bodennaher Freisetzung im Zweifel diese Einstellung wählen. Bei Brandrauch beide Einstellungen rechnen: Eine aufsteigende Fahne kann in Bebauung früher den Boden erreichen.';
 }
 $('urban').onchange=urbNote; urbNote();
 function setRel(inst){
