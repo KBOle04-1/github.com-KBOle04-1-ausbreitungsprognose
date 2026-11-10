@@ -139,6 +139,22 @@ Die Tabelle „Wirkungszonen" nennt je Zone Radius und Laufzeit der Druckwelle.
 - Bei stabiler Schichtung (Inversion) wird die Druckwelle zum Boden zurückgelenkt; Fensterbruch kann dann deutlich weiter reichen als der äußere Kreis. Die App warnt in diesem Fall, ebenso bei starkem Wind.
 - Gebäude schirmen ab, in Straßenzügen kann der Druck gebündelt und verstärkt werden. Beides ist nicht erfasst.
 
+## Auswertung drucken (PDF)
+
+Nach jeder Berechnung steht unter der Zeitleiste die Schaltfläche „Auswertung drucken (PDF)". Sie erzeugt ein PDF im Format A4 mit:
+
+- dem Hinweis „Prognose! Werte sind durch geeignete Messungen vor Ort zu überprüfen!" auf der ersten Seite und in jeder Fußzeile,
+- allen Eingangsparametern, so wie sie bei der Berechnung galten (Ort, Zeit, Stoff oder Brand, Mengen, Schwellenwerte, Rechengebiet, Gelände, Wetter mit Stationsmessung und Modellvergleich, Fließgewässer),
+- den Bemessungsergebnissen als Tabelle je Zeitfenster,
+- den Hinweisen zur Bewertung,
+- einer Karte für den Gesamtbereich und einer Karte für jedes Zeitfenster, jeweils mit Gefahrenflächen, Radien samt Entfernung, Maßstab und Nordpfeil. Alle Karten zeigen denselben Ausschnitt, damit sich die Zeitfenster vergleichen lassen.
+
+Blast-Cast liefert statt der Zeitfenster eine Übersichtskarte und eine Karte des Nahbereichs.
+
+Danach erscheint „PDF teilen oder sichern" (iPhone und iPad: Drucken, in Dateien sichern, versenden) oder „PDF öffnen". Bei 12 Stunden Prognosedauer entstehen 49 Karten auf rund 28 Seiten.
+
+Der Kartenhintergrund wird für das PDF gesondert geladen. Lässt der Kartendienst das nicht zu, erscheinen die Karten mit grauem Hintergrund und dem Vermerk „Kartenhintergrund nicht verfügbar"; Flächen, Radien und Maßstab bleiben erhalten.
+
 ## Radien auf der Karte
 
 Für jede Schwelle wird ein farbiger Umkreis um den Freisetzungsort gezeichnet, dessen Radius der Reichweite entspricht. Eine gepunktete Linie führt zum entferntesten Punkt, dort steht die Entfernung (z. B. „AEGL-2 · 1,9 km"). Gefahrstoff: durchgezogene Kreise in Gelb, Orange, Rot. Brandrauch im kombinierten Modus: gestrichelte Kreise. Vegetationsbrand: ein roter Kreis für die Front. Mit dem Häkchen „Radien mit Entfernung einblenden" über der Zeitleiste lassen sie sich ausblenden.
