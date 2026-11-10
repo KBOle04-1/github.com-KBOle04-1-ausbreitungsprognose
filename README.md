@@ -198,9 +198,9 @@ Beispiel Chlor, 30 kg/min, Wind 3 m/s, neutrale Schichtung, ohne Gelände: AEGL-
 
 ## Nicht eingebundene Datenquellen
 
-- **Kachelmannwetter, Meteosol:** bieten keine frei nutzbare Schnittstelle für Apps. Stattdessen der Modellvergleich oben, der dieselben staatlichen Modelle nutzt.
+- **Kachelmannwetter, Meteosol:** Eine frei nutzbare Schnittstelle für Apps ist für beide nicht bekannt (Stand November 2026, nicht abschließend geprüft). Stattdessen der Modellvergleich oben, der dieselben staatlichen Modelle nutzt.
 - **USGS EarthExplorer:** nur mit Anmeldung und ohne Schnittstelle für eine Web-App; die LIDAR-Daten dort decken die USA ab.
-- **OpenTopography:** hat für Deutschland keine LIDAR-Daten, nur weltweite Höhenmodelle mit rund 30 m Auflösung, also dieselbe Datenklasse, die die App schon nutzt. Der Abruf braucht einen persönlichen Schlüssel.
+- **OpenTopography:** bietet für Deutschland nach bisherigem Kenntnisstand keine LIDAR-Daten, nur weltweite Höhenmodelle mit rund 30 m Auflösung, also dieselbe Datenklasse, die die App schon nutzt. Der Abruf braucht einen persönlichen Schlüssel.
 - **BlenderGIS:** ist eine Erweiterung für das 3D-Programm Blender auf dem PC und keine Datenquelle.
 - Echte LIDAR-Höhendaten für Deutschland (DGM1, 1 m Auflösung) geben die Landesvermessungen heraus, je Bundesland auf eigenem Weg.
 
