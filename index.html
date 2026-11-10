@@ -67,7 +67,14 @@ button{padding:8px 12px;border:1px solid var(--line);border-radius:6px;backgroun
 button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:650;padding:12px;font-size:16px}
 button:disabled{opacity:.55;cursor:wait}
 .seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:6px;overflow:hidden}
-.seg.four{grid-template-columns:1fr 1fr}
+.seg.four{grid-template-columns:1fr 1fr 1fr}
+header{flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:8px;padding-bottom:0}
+.tabs{display:flex;gap:4px}
+.tabs button{flex:1;border:0;border-top:3px solid transparent;border-radius:6px 6px 0 0;padding:8px 6px;font-size:13.5px;line-height:1.2;font-weight:600;background:rgba(255,255,255,.16);color:var(--accent-ink)}
+.tabs button.blast{background:#e06a00;color:#fff}
+.tabs button[aria-selected=true]{background:var(--bg);color:var(--ink);border-top-color:var(--accent-ink)}
+.tabs button.blast[aria-selected=true]{background:var(--bg);color:#e06a00;border-top-color:#e06a00}
+body[data-tab=blast] button.primary{background:#e06a00;border-color:#e06a00;color:#fff}
 .rlab{position:absolute;transform:translate(-50%,-130%);white-space:nowrap;background:var(--panel);color:var(--ink);border:2px solid;border-radius:4px;padding:0 5px;font:600 12px/1.5 var(--font);font-variant-numeric:tabular-nums;box-shadow:0 1px 3px rgba(0,0,0,.35)}
 .seg button{border:0;border-radius:0;background:var(--bg);padding:9px 4px}
 .seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);font-weight:650}
@@ -98,12 +105,17 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
 </head>
 <body>
 <div id="app">
-<header><h1>Ausbreitungsprognose</h1><span>Gefahrstoff und Brandrauch · Wetter live · Gelände · 15-Minuten-Zeitfenster</span></header>
+<header><h1>Ausbreitungsprognose</h1>
+<nav class="tabs" role="tablist" aria-label="Prognoseart">
+  <button id="tabCloud" role="tab" aria-selected="true">Gefahrstoff und Rauch</button>
+  <button id="tabVeg" role="tab" aria-selected="false">Vegetations&shy;brand</button>
+  <button id="tabBlast" role="tab" aria-selected="false" class="blast">Blast-Cast</button>
+</nav></header>
 
 <div id="mapwrap"><div id="map"></div><div id="hint">Karte antippen: Freisetzungsort setzen</div></div>
 
 <div id="timeline" hidden>
-  <div class="tl-row">
+  <div class="tl-row" id="tlRow">
     <button id="prev" aria-label="Vorheriges Zeitfenster">◀</button>
     <input type="range" id="slider" min="0" max="1" value="0" step="1" aria-label="Zeitfenster">
     <button id="next" aria-label="Nächstes Zeitfenster">▶</button>
@@ -116,7 +128,7 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
 
 <main>
   <section>
-    <h2>1 · Freisetzungsort</h2>
+    <h2>1 · Ereignisort</h2>
     <div class="inline"><input type="text" id="q" placeholder="Adresse oder Ort suchen" aria-label="Adresse suchen"><button id="search">Suchen</button></div>
     <div class="inline"><button id="gps">Mein Standort</button><span id="coords" class="small mono" style="align-self:center">noch kein Ort gewählt</span></div>
     <div id="terrinfo" class="small"></div>
@@ -124,7 +136,7 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
 
   <section>
     <h2>2 · Szenario</h2>
-    <div class="seg four"><button id="modeGas" aria-pressed="true">Gefahrstoff</button><button id="modeFire" aria-pressed="false">Brandrauch</button><button id="modeCombo" aria-pressed="false">Kombiniert</button><button id="modeVeg" aria-pressed="false">Vegetationsbrand</button></div>
+    <div class="seg four" id="modeSeg"><button id="modeGas" aria-pressed="true">Gefahrstoff</button><button id="modeFire" aria-pressed="false">Brandrauch</button><button id="modeCombo" aria-pressed="false">Kombiniert</button></div>
     <div id="comboNote" class="small" hidden>Kombiniert: Gefahrstoff und Brandrauch werden vom selben Ort aus gerechnet und gemeinsam auf der Karte gezeigt. Gefahrstoff als Farbfläche, Brandrauch schraffiert.</div>
 
     <div id="gasBox" style="display:grid;gap:10px">
@@ -164,6 +176,46 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
       </select></label>
     </div>
 
+    <div id="blastBox" style="display:none;gap:10px">
+      <div class="seg"><button id="bGas" aria-pressed="true">Gas-Luft-Gemisch</button><button id="bBomb" aria-pressed="false">Weltkriegsbombe</button></div>
+      <div id="bGasBox" style="display:grid;gap:10px">
+        <label>Gas<select id="bfuel">
+          <option value="50">Methan / Erdgas</option>
+          <option value="46.3" selected>Propan / Flüssiggas</option>
+          <option value="45.7">Butan</option>
+          <option value="120">Wasserstoff</option>
+          <option value="48.2">Acetylen</option>
+          <option value="47.2">Ethylen</option>
+          <option value="44">Benzindampf</option>
+        </select></label>
+        <div class="row">
+          <label>Gasmenge in der Wolke kg<input type="number" id="bmass" value="100" min="0.1" step="10"></label>
+          <label>Verdämmung<select id="byield">
+            <option value="0.03">frei, offenes Gelände (3 %)</option>
+            <option value="0.1" selected>teilweise: Bebauung, Anlagen (10 %)</option>
+            <option value="0.2">stark: im Gebäude, im Behälter (20 %)</option>
+          </select></label>
+        </div>
+        <div class="small">Die Prozentzahl ist der Anteil der Verbrennungsenergie, der in die Druckwelle geht (TNT-Äquivalent-Verfahren). Je enger und verbauter der Raum, desto heftiger die Explosion.</div>
+      </div>
+      <div id="bBombBox" hidden style="display:grid;gap:10px">
+        <label>Bombentyp<select id="bbomb">
+          <option value="45,25">Sprengbombe 100 lb (ca. 45 kg)</option>
+          <option value="115,60">Sprengbombe 250 lb (ca. 115 kg)</option>
+          <option value="227,120" selected>Sprengbombe 500 lb (ca. 227 kg)</option>
+          <option value="454,250">Sprengbombe 1000 lb (ca. 454 kg)</option>
+          <option value="907,500">Sprengbombe 2000 lb (ca. 907 kg)</option>
+          <option value="1800,1350">Luftmine 4000 lb (ca. 1800 kg)</option>
+        </select></label>
+        <div class="row">
+          <label>Gesamtmasse kg<input type="number" id="bauw" value="227" min="1" step="1"></label>
+          <label>Sprengstoff kg (als TNT)<input type="number" id="bneq" value="120" min="0.1" step="1"></label>
+        </div>
+        <div class="small">Richtwerte je Gewichtsklasse, beide Felder lassen sich überschreiben. Gerechnet wird eine Detonation an der Oberfläche.</div>
+      </div>
+      <div class="small">Blast-Cast zeigt, bis in welche Entfernung welcher Überdruck der Druckwelle zu erwarten ist. Die Druckwelle läuft in Sekunden durch, deshalb gibt es hier keine Zeitfenster.</div>
+    </div>
+
     <div id="vegBox" style="display:none;gap:10px">
       <label>Vegetation<select id="vfuel">
         <option value="0.20,0.03">Gras, Wiese, Brachfläche</option>
@@ -200,13 +252,13 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
       <div class="small">Rauchpartikel, Orientierungswerte, keine amtlichen Grenzwerte.</div>
     </div>
 
-    <div class="row">
+    <div class="row" id="gridRow">
       <label id="urbLbl">Umgebung<select id="urban"><option value="0">Freifläche</option><option value="1">Bebauung</option></select></label>
       <label>Rechengebiet<select id="radius"><option value="1000">± 1 km</option><option value="2000">± 2 km</option><option value="5000" selected>± 5 km</option><option value="10000">± 10 km</option><option value="20000">± 20 km</option><option value="50000">± 50 km</option></select></label>
       <label>Prognosedauer<select id="horizon"><option value="4">1 h</option><option value="8">2 h</option><option value="12" selected>3 h</option><option value="16">4 h</option><option value="24">6 h</option><option value="32">8 h</option><option value="48">12 h</option></select></label>
     </div>
     <div id="urbnote" class="small"></div>
-    <div class="small">Großes Rechengebiet bedeutet gröbere Auflösung (± 50 km: rund 400 m). Den Nahbereich getrennt mit kleinem Gebiet rechnen. Das Wetter wird am Freisetzungsort abgegriffen und gilt für das ganze Gebiet.</div>
+    <div class="small" id="gridNote">Großes Rechengebiet bedeutet gröbere Auflösung (± 50 km: rund 400 m). Den Nahbereich getrennt mit kleinem Gebiet rechnen. Das Wetter wird am Freisetzungsort abgegriffen und gilt für das ganze Gebiet.</div>
     <label class="check"><input type="checkbox" id="useTerr" checked>Gelände (Topographie) berücksichtigen</label>
   </section>
 
@@ -215,6 +267,7 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
     <div class="inline"><input type="datetime-local" id="t0" aria-label="Ereignisbeginn"><button id="now">Jetzt</button></div>
     <div id="wxinfo" class="small">Wetterdaten werden geladen, sobald ein Ort gewählt ist.</div>
     <div id="obsinfo" class="small"></div>
+    <div id="mdlinfo" class="small"></div>
     <label class="check"><input type="checkbox" id="manual">Wetter von Hand vorgeben (Messung vor Ort, Übung)</label>
     <div id="manBox" class="row" hidden>
       <label>Wind aus Grad<input type="number" id="mdir" value="270" min="0" max="360" step="5"></label>
@@ -230,16 +283,16 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
   <div id="warnings" class="warn" hidden></div>
 
   <section id="tablesec" hidden>
-    <h2>Zeittabelle</h2>
+    <h2 id="tblTitle">Zeittabelle</h2>
     <div class="tablewrap"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
-    <div class="small">Reichweite: größte Entfernung vom Freisetzungsort, in der die Schwelle im Zeitfenster überschritten wird. Zeile antippen zeigt das Zeitfenster auf der Karte.</div>
+    <div class="small" id="tblNote">Reichweite: größte Entfernung vom Freisetzungsort, in der die Schwelle im Zeitfenster überschritten wird. Zeile antippen zeigt das Zeitfenster auf der Karte.</div>
   </section>
 
   <section>
     <h2>Modell und Grenzen</h2>
     <div class="small">
-      Gauß-Wolkenmodell (Lagrange-Puffs, alle 30 s) mit Briggs-Ausbreitungsparametern, Schichtung nach Pasquill/Turner aus Wind, Globalstrahlung und Bewölkung, Windprofil mit der Höhe, Brandüberhöhung nach Briggs. Vegetationsbrand: Ausbreitung der Feuerfront als Ellipse in Windrichtung nach Faustformeln (Anteil der Windgeschwindigkeit je Vegetation), Brennstofffeuchte aus Temperatur und Luftfeuchte, Hangneigung. Gelände: Windumlenkung an Hängen, Kaltluftabfluss bei stabiler Schichtung, hangabwärts fließende Schwergase und Auftreffen der Fahne auf höheres Gelände, jeweils als vereinfachte Korrektur.<br><br>
-      Datenquellen: Open-Meteo (DWD ICON-D2, 15-Minuten-Werte), Bright Sky (DWD-Stationsmessung), Höhendaten Mapzen/AWS Terrain Tiles oder Open-Meteo (Copernicus DEM), Karten OpenTopoMap und OpenStreetMap, Suche Nominatim.<br><br>
+      Gauß-Wolkenmodell (Lagrange-Puffs, alle 30 s) mit Briggs-Ausbreitungsparametern, Schichtung nach Pasquill/Turner aus Wind, Globalstrahlung und Bewölkung, Windprofil mit der Höhe, Brandüberhöhung nach Briggs. Vegetationsbrand: Ausbreitung der Feuerfront als Ellipse in Windrichtung nach Faustformeln (Anteil der Windgeschwindigkeit je Vegetation), Brennstofffeuchte aus Temperatur und Luftfeuchte, Hangneigung. Gelände: Windumlenkung an Hängen, Kaltluftabfluss bei stabiler Schichtung, hangabwärts fließende Schwergase und Auftreffen der Fahne auf höheres Gelände, jeweils als vereinfachte Korrektur. Blast-Cast: Spitzenüberdruck nach Kinney und Graham über den skalierten Abstand, Oberflächendetonation mit Faktor 1,8, Gas über TNT-Äquivalent, Splitterbereich nach UN IATG 01.80; das Gelände wird als Sichtlinie ausgewertet (Druckschatten).<br><br>
+      Datenquellen: Open-Meteo (DWD ICON-D2, 15-Minuten-Werte; Modellvergleich mit ICON-EU, ECMWF IFS, GFS und Météo-France), Bright Sky (DWD-Stationsmessung), Höhendaten Mapzen/AWS Terrain Tiles oder Open-Meteo (Copernicus DEM), Karten OpenTopoMap und OpenStreetMap, Suche Nominatim.<br><br>
       <strong>Nur Orientierungshilfe.</strong> Das Ergebnis ersetzt keine Messungen vor Ort, keine Fachberatung (z. B. TUIS, Fachberater Chemie) und keine zugelassenen Programme. Schwergase, Aerosole, chemische Umwandlung, Niederschlag, Gebäudeumströmung und kleinräumige Talwinde sind nicht oder nur grob erfasst. Die voreingestellten Schwellenwerte vor Verwendung mit der aktuellen AEGL-Liste abgleichen.<br><br>
       <a href="https://github.com/KBOle04-1/github.com-KBOle04-1-ausbreitungsprognose#readme">Hinweise zum Nachschlagen (Readme)</a>
     </div>
@@ -470,7 +523,29 @@ function spreadFire(V){
   }
   return arr;
 }
-if (typeof module!=='undefined') module.exports={stabClass,sigma,trackPuffs,evalField,prepTerrain,plumeRiseFinal,fuelMoisture,rosParams,spreadFire};
+
+/* ---------- Blast-Cast: Druckwelle ---------- */
+// Spitzenüberdruck im Verhältnis zum Luftdruck nach Kinney und Graham, Z = skalierter Abstand in m/kg^(1/3)
+function blastRatio(Z){
+  return 808*(1+(Z/4.5)**2)/(Math.sqrt(1+(Z/0.048)**2)*Math.sqrt(1+(Z/0.32)**2)*Math.sqrt(1+(Z/1.35)**2));
+}
+// Entfernung (m), in der der Überdruck ps (Pa) erreicht wird; Wkg TNT an der Oberfläche (Faktor 1,8), Luftdruck p0 (Pa)
+function blastRadius(Wkg, ps, p0){
+  const W=1.8*Wkg, target=ps/p0;
+  let lo=0.05, hi=5000;
+  for(let i=0;i<80;i++){ const mid=Math.sqrt(lo*hi); if(blastRatio(mid)>target) lo=mid; else hi=mid; }
+  return lo*Math.cbrt(W)/Math.cbrt(p0/101325);
+}
+// Druckschatten: 1, wenn die Sichtlinie vom Explosionsort (hs über Grund) zum Punkt (hr über Grund) vom Gelände unterbrochen ist
+function blastShadow(T, hs, hr){
+  const N=T.N, out=new Uint8Array(N*N), z0=T.hsrc+hs;
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+    const x=-T.R+i*T.cell, y=-T.R+j*T.cell, d=Math.hypot(x,y), n=Math.ceil(d/T.cell), z1=T.h[j*N+i]+hr;
+    for(let q=1;q<n;q++){ const f=q/n; if(bil(T,T.h,x*f,y*f)>z0+(z1-z0)*f+2){ out[j*N+i]=1; break; } }
+  }
+  return out;
+}
+if (typeof module!=='undefined') module.exports={stabClass,sigma,trackPuffs,evalField,prepTerrain,plumeRiseFinal,fuelMoisture,rosParams,spreadFire,blastRatio,blastRadius,blastShadow};
 </script>
 
 <script>
@@ -504,10 +579,11 @@ const hhmm=ts=>new Date(ts*1000).toLocaleTimeString('de-DE',{hour:'2-digit',minu
 const dist=m=>m<=0?'–':m<1000?Math.round(m/10)*10+' m':fmt(m/1000,1)+' km';
 function status(t){ $('status').textContent=t; }
 
+const DE=[[47.2,5.8],[55.1,15.1]];   // Rechen- und Kartenbereich: Deutschland
 /* ---------- Karte ---------- */
 let map=null;
 if (window.L){
-  map=L.map('map').setView([51.1,10.3],6);
+  map=L.map('map',{minZoom:5,maxBounds:L.latLngBounds(DE).pad(0.3),maxBoundsViscosity:0.9}).fitBounds(DE);
   const otm=L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'Kartendaten © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende, SRTM | Darstellung © <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)'});
   const osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende'});
   otm.addTo(map);
@@ -519,6 +595,7 @@ if (window.L){
 }
 
 function setSource(lat,lon,zoom){
+  if(lat<DE[0][0]||lat>DE[1][0]||lon<DE[0][1]||lon>DE[1][1]){ status('Der Ort liegt außerhalb Deutschlands. Das Tool rechnet nur innerhalb Deutschlands.'); return; }
   S.src={lat,lon};
   $('hint').hidden=true;
   $('coords').textContent=lat.toFixed(5)+'° N, '+lon.toFixed(5)+'° O';
@@ -530,7 +607,7 @@ function setSource(lat,lon,zoom){
     if (zoom || map.getZoom()<11) map.setView([lat,lon],Math.max(map.getZoom(),13));
   }
   $('terrinfo').textContent='';
-  loadWeather().then(showWx).catch(e=>{$('wxinfo').textContent='Wetterdaten nicht abrufbar: '+e.message;});
+  loadWeather().then(()=>{showWx(); loadModels();}).catch(e=>{$('wxinfo').textContent='Wetterdaten nicht abrufbar: '+e.message;});
   loadObs();
 }
 
@@ -538,7 +615,7 @@ $('search').onclick=async()=>{
   const q=$('q').value.trim(); if(!q) return;
   status('Suche Ort …');
   try{
-    const r=await fetchJSON('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q));
+    const r=await fetchJSON('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=de&q='+encodeURIComponent(q));
     if(!r.length){ status('Kein Ort gefunden. Schreibweise prüfen oder Karte antippen.'); return; }
     status(r[0].display_name);
     setSource(+r[0].lat,+r[0].lon,true);
@@ -575,15 +652,31 @@ function fillThresholds(){
 sel.onchange=fillThresholds;
 function setMode(m){
   S.mode=m;
-  for(const [id,k] of [['modeGas','gas'],['modeFire','fire'],['modeCombo','combo'],['modeVeg','veg']]) $(id).setAttribute('aria-pressed',m===k);
-  const veg=m==='veg';
+  for(const [id,k] of [['modeGas','gas'],['modeFire','fire'],['modeCombo','combo']]) $(id).setAttribute('aria-pressed',m===k);
+  const veg=m==='veg', blast=m==='blast';
+  if(!veg&&!blast) S.cloudMode=m;
+  $('blastBox').style.display=blast?'grid':'none';
+  for(const id of ['gridRow','gridNote']) $(id).hidden=blast;
   $('gasBox').style.display=(m==='gas'||m==='combo')?'grid':'none'; $('fireBox').style.display=(m==='fire'||m==='combo')?'grid':'none';
   $('vegBox').style.display=veg?'grid':'none';
-  for(const id of ['thrRow','thrnote','urbLbl','urbnote']) $(id).hidden=veg;
+  for(const id of ['thrRow','thrnote','urbLbl','urbnote']) $(id).hidden=veg||blast;
   document.querySelectorAll('.combo').forEach(e=>e.hidden=m!=='combo'); $('comboNote').hidden=m!=='combo';
   fillThresholds();
 }
-$('modeGas').onclick=()=>setMode('gas'); $('modeFire').onclick=()=>setMode('fire'); $('modeCombo').onclick=()=>setMode('combo'); $('modeVeg').onclick=()=>setMode('veg');
+$('modeGas').onclick=()=>setMode('gas'); $('modeFire').onclick=()=>setMode('fire'); $('modeCombo').onclick=()=>setMode('combo');
+function setTab(t){
+  S.tab=t; document.body.dataset.tab=t;
+  for(const [id,k] of [['tabCloud','cloud'],['tabVeg','veg'],['tabBlast','blast']]) $(id).setAttribute('aria-selected',t===k);
+  $('modeSeg').hidden=t!=='cloud';
+  setMode(t==='cloud'?(S.cloudMode||'gas'):t);
+}
+$('tabCloud').onclick=()=>setTab('cloud'); $('tabVeg').onclick=()=>setTab('veg'); $('tabBlast').onclick=()=>setTab('blast');
+function setBlastKind(bomb){
+  S.bomb=bomb; $('bGas').setAttribute('aria-pressed',!bomb); $('bBomb').setAttribute('aria-pressed',bomb);
+  $('bGasBox').hidden=bomb; $('bBombBox').hidden=!bomb;
+}
+$('bGas').onclick=()=>setBlastKind(false); $('bBomb').onclick=()=>setBlastKind(true);
+$('bbomb').onchange=()=>{ const [a,n]=$('bbomb').value.split(','); $('bauw').value=a; $('bneq').value=n; };
 function urbNote(){
   $('urbnote').innerHTML=$('urban').value==='1'
    ? '<strong>Bebauung:</strong> Ortslage, Stadt, Gewerbegebiet. Gebäude verwirbeln die Luft stark. Die Wolke wird schnell breiter und höher durchmischt, die Konzentration fällt rascher ab: kürzere Reichweite, dafür breiterer Streifen. Straßenschluchten, Stau hinter Gebäuden und Eindringen in Häuser sind nicht erfasst.'
@@ -599,9 +692,9 @@ $('relCont').onclick=()=>setRel(false); $('relInst').onclick=()=>setRel(true);
 $('firePreset').onchange=()=>{$('mw').value=$('firePreset').value;};
 $('manual').onchange=()=>{$('manBox').hidden=!$('manual').checked;};
 function setNow(){ const d=new Date(); d.setSeconds(0,0); $('t0').value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16); }
-$('now').onclick=()=>{setNow(); showWx();};
-$('t0').onchange=showWx;
-setNow(); fillThresholds();
+$('now').onclick=()=>{setNow(); showWx(); showModels();};
+$('t0').onchange=()=>{showWx(); showModels();};
+setNow(); fillThresholds(); document.body.dataset.tab='cloud';
 
 /* ---------- Wetter ---------- */
 async function fetchJSON(url){
@@ -676,6 +769,42 @@ function showWx(){
   if(!(ts>=W.t[0] && ts<=W.t[W.t.length-1])){ $('wxinfo').textContent='Für diesen Zeitpunkt liegen keine Wetterdaten vor (verfügbar: gestern bis übermorgen).'; return; }
   const w=wxAt(ts);
   $('wxinfo').innerHTML=`<strong>Vorhersage ${hhmm(ts)} Uhr</strong> (Open-Meteo, ${W.step15?'15-Minuten-Werte':'Stundenwerte, interpoliert'}): Wind ${windText(w)}, ${fmt(w.T)} °C, Luftfeuchte ${Math.round(w.rh)} %, Bewölkung ${Math.round(w.cloud)} %, Strahlung ${Math.round(w.rad)} W/m², Niederschlag ${fmt(w.prec)} mm. Schichtung <strong>${CLS[w.cls]}</strong> (${CLSTXT[w.cls]})`+(w.zi?`, Mischungsschicht ${Math.round(w.zi)} m.`:'.');
+}
+const MODELS=[['icon_d2','ICON-D2'],['icon_eu','ICON-EU'],['ecmwf_ifs025','ECMWF IFS'],['gfs_seamless','GFS'],['meteofrance_seamless','Météo-France']];
+async function loadModels(){
+  const key=S.wxKey, {lat,lon}=S.src, out=[];
+  $('mdlinfo').textContent='';
+  await Promise.all(MODELS.map(async([id,name],idx)=>{
+    try{
+      const d=await fetchJSON(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&wind_speed_unit=ms&timeformat=unixtime&timezone=GMT&past_days=1&forecast_days=3&hourly=wind_speed_10m,wind_direction_10m&models=${id}`);
+      const h=d.hourly, n=h.time.length, U=new Float32Array(n), V=new Float32Array(n);
+      for(let i=0;i<n;i++){ const sp=h.wind_speed_10m[i], dr=h.wind_direction_10m[i]; if(sp==null||dr==null){U[i]=V[i]=NaN;continue;} U[i]=-sp*Math.sin(dr*Math.PI/180); V[i]=-sp*Math.cos(dr*Math.PI/180); }
+      out.push({idx,name,t:h.time,U,V,spd:h.wind_speed_10m});
+    }catch(e){ /* Modell für diesen Ort nicht verfügbar */ }
+  }));
+  if(S.wxKey!==key) return;
+  S.mdl=out.sort((a,b)=>a.idx-b.idx); showModels();
+}
+// Vergleich der Wettermodelle zum Zeitpunkt ts: Liste und größte Abweichung der Windrichtung
+function modelSpread(ts){
+  const rows=[];
+  for(const m of S.mdl||[]){
+    const U=lin(m.t,m.U,ts), V=lin(m.t,m.V,ts), sp=lin(m.t,m.spd,ts);
+    if(Number.isNaN(U)||Number.isNaN(V)||Number.isNaN(sp)||ts<m.t[0]||ts>m.t[m.t.length-1]) continue;
+    rows.push({name:m.name,sp,dir:(Math.atan2(-U,-V)*180/Math.PI+360)%360});
+  }
+  let spread=0;
+  for(const a of rows) for(const b of rows){ const d=Math.abs(a.dir-b.dir); spread=Math.max(spread,Math.min(d,360-d)); }
+  return {rows,spread};
+}
+function showModels(){
+  if(!S.mdl||!S.src) return;
+  const ts=t0sec(), {rows,spread}=modelSpread(ts);
+  if(rows.length<2){ $('mdlinfo').textContent=''; return; }
+  const sps=rows.map(r=>r.sp);
+  $('mdlinfo').innerHTML=`<strong>Modellvergleich ${hhmm(ts)} Uhr:</strong> `+rows.map(r=>`${r.name} ${Math.round(r.dir)}° / ${fmt(r.sp)} m/s`).join(' · ')
+    +`. Windrichtung weicht bis ${Math.round(spread)}° voneinander ab, Windstärke ${fmt(Math.min(...sps))} bis ${fmt(Math.max(...sps))} m/s.`
+    +(spread>45?' <strong>Die Modelle sind sich uneinig: Windrichtung unsicher, vor Ort messen.</strong>':'');
 }
 async function loadObs(){
   $('obsinfo').textContent='';
@@ -762,6 +891,7 @@ async function run(){
   try{
     const manual=$('manual').checked, R=+$('radius').value, nSlots=+$('horizon').value, T0=t0sec();
     if(!Number.isFinite(T0)) throw new Error('Ereignisbeginn fehlt.');
+    if(S.mode==='blast'){ await runBlast(manual,T0); btn.disabled=false; return; }
     if(!manual){
       status('Lade Wetterdaten …'); await loadWeather(); showWx();
       const W=S.wx;
@@ -868,6 +998,86 @@ function render(f,thr,N,hatch){
   return cv.toDataURL('image/png');
 }
 
+/* Blast-Cast */
+const BLAST_LV=[
+  {kpa:2,  col:'#6f8f00', txt:'Fensterbruch möglich, Verletzungen durch Glassplitter'},
+  {kpa:7,  col:'#c99a00', txt:'Fenster und Türen zerstört, Dächer abgedeckt, Leichtbauten beschädigt'},
+  {kpa:20, col:'#e06a00', txt:'Schwere Gebäudeschäden, Mauerwerk teilweise zerstört'},
+  {kpa:35, col:'#c4001a', txt:'Trommelfellrisse, Wohngebäude weitgehend zerstört'},
+  {kpa:100,col:'#5a0010', txt:'Lebensgefahr durch den Druck selbst (Lungenschäden)'}];
+async function runBlast(manual,T0){
+  if(!manual){
+    status('Lade Wetterdaten …'); await loadWeather(); showWx();
+    const W=S.wx; if(T0<W.t[0]||T0>W.t[W.t.length-1]) throw new Error('Für diesen Zeitpunkt liegen keine Wetterdaten vor. Ereignisbeginn anpassen oder Wetter von Hand vorgeben.');
+  }
+  const w=wxAt(T0), p0=w.pres*100;
+  let Wt, label, frag=0;
+  if(S.bomb){
+    Wt=num('bneq',0); const auw=Math.max(num('bauw',0),Wt);
+    if(!(Wt>0)) throw new Error('Sprengstoffmasse angeben.');
+    frag=634*Math.pow(auw,1/6); label=$('bbomb').selectedOptions[0].textContent;
+  } else {
+    const m=num('bmass',0); if(!(m>0)) throw new Error('Gasmenge angeben.');
+    Wt=+$('byield').value*m*(+$('bfuel').value)/4.6;
+    label=fmt(m,0)+' kg '+$('bfuel').selectedOptions[0].textContent;
+  }
+  const c0=Math.sqrt(1.4*287*w.Tk);
+  const zones=BLAST_LV.map(l=>{ const r=blastRadius(Wt,l.kpa*1000,p0); return {...l,r,ta:r/c0}; });
+  const rmax=zones[0].r, R=Math.max(200,Math.ceil(rmax*1.25/100)*100);
+  let terr=null, img=null, shade=0;
+  if($('useTerr').checked){ status('Lade Höhendaten …'); terr=await loadTerrain(R); }
+  if(terr){
+    status('Berechne Druckschatten …'); await pause();
+    const sh=blastShadow(terr,1.5,1.5), N=terr.N, K=3, M=(N-1)*K+1, cv=document.createElement('canvas'); cv.width=cv.height=M;
+    const cx=cv.getContext('2d'), im=cx.createImageData(M,M), D=im.data; let inC=0, shC=0;
+    for(let k=0;k<N*N;k++){ const i=k%N, j=(k-i)/N; if(Math.hypot(-R+i*terr.cell,-R+j*terr.cell)<=rmax){ inC++; if(sh[k]) shC++; } }
+    shade=inC?shC/inC:0;
+    for(let r=0;r<M;r++)for(let c=0;c<M;c++){
+      if((r+c)%7>=3) continue;
+      const j=Math.round((M-1-r)/K), i=Math.round(c/K);
+      if(!sh[j*N+i]||Math.hypot(-R+i*terr.cell,-R+j*terr.cell)>rmax) continue;
+      const o=(r*M+c)*4; D[o]=40; D[o+1]=50; D[o+2]=60; D[o+3]=170;
+    }
+    cx.putImageData(im,0,0); img=cv.toDataURL('image/png');
+  }
+  S.res={blast:true,zones,frag,Wt,label,bomb:!!S.bomb,R,lat:S.src.lat,lon:S.src.lon,T0,terr:!!terr,img,shade,w,layers:[],meta:[],nSlots:0};
+  const ws=[];
+  if(S.bomb){
+    ws.push('Splitter fliegen viel weiter, als die Druckwelle wirkt. Den Evakuierungsradius legt der Kampfmittelräumdienst fest; der gestrichelte Kreis ist die Faustformel der Vereinten Nationen für eine ungeschützte Detonation im Freien.');
+    ws.push('Liegt die Bombe im Erdreich, wird die Druckwelle gedämpft. Dafür kommen Erdauswurf und Erschütterung hinzu.');
+  } else {
+    ws.push('Das TNT-Äquivalent-Verfahren ist für Gaswolken grob: Im Nahbereich wird der Druck eher überschätzt, die Verdämmung bestimmt das Ergebnis stark. Im Zweifel die höhere Verdämmung wählen.');
+    ws.push('Feuerball, Wärmestrahlung und Trümmerwurf sind nicht dargestellt.');
+  }
+  ws.push('Gebäude schirmen ab, in Straßenzügen kann der Druck aber gebündelt und verstärkt werden. Beides ist nicht erfasst.');
+  if(w.cls>=4) ws.push('Stabile Schichtung (Inversion): Die Druckwelle wird zum Boden zurückgelenkt. Fensterbruch kann deutlich weiter reichen als der äußere Kreis.');
+  if(w.u10>=5) ws.push(`Wind aus ${Math.round(w.dir)}° mit ${fmt(w.u10)} m/s: In Windrichtung reicht die Wirkung etwas weiter, gegen den Wind etwas weniger weit.`);
+  if(!terr) ws.push($('useTerr').checked?'Höhendaten nicht abrufbar: ohne Druckschatten des Geländes gerechnet.':'Gelände abgeschaltet: ohne Druckschatten gerechnet.');
+  const el=$('warnings'); el.hidden=false; el.innerHTML='<ul>'+ws.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+  buildTable(); $('timeline').hidden=false; $('tablesec').hidden=false; show(0);
+  if(map) map.fitBounds(L.latLng(S.src.lat,S.src.lon).toBounds(2.2*Math.max(rmax,frag)));
+  status(`Fertig: ${label}, entspricht ${fmt(Wt,Wt<10?1:0)} kg TNT.`);
+}
+function clearFills(){ (S.fills||[]).forEach(o=>map&&map.removeLayer(o)); S.fills=[]; }
+function showBlast(){
+  const r=S.res;
+  $('tlRow').hidden=true; S.slot=0;
+  if(map){
+    (S.overlays||[]).forEach(o=>map.removeLayer(o)); S.overlays=[]; clearFills();
+    for(const z of r.zones) S.fills.push(L.circle([r.lat,r.lon],{radius:z.r,color:z.col,weight:1,fillColor:z.col,fillOpacity:0.22,interactive:false}).addTo(map));
+    if(r.img) S.overlays.push(L.imageOverlay(r.img,boundsOf(r),{opacity:1,interactive:false}).addTo(map));
+    const rings=r.zones.map((z,i)=>{ const a=(-70+35*i)*Math.PI/180; return {r:z.r,far:[Math.sin(a),Math.cos(a)],color:z.col,dash:false,text:z.kpa+' kPa · '+dist(z.r)}; });
+    if(r.frag) rings.push({r:r.frag,far:[-0.7,-0.7],color:'#333c44',dash:true,text:'Splitter · '+dist(r.frag)});
+    drawRings(rings);
+  }
+  $('slotlabel').textContent=`Druckwelle: ${r.label} (${fmt(r.Wt,r.Wt<10?1:0)} kg TNT)`;
+  let h='<div class="reach">';
+  for(let i=r.zones.length-1;i>=0;i--){ const z=r.zones[i]; h+=`<span class="chip"><span class="sw" style="background:${z.col}"></span>${z.kpa} kPa bis ${dist(z.r)}</span>`; }
+  if(r.frag) h+=`<span class="chip"><span class="sw" style="background:repeating-linear-gradient(90deg,#333c44 0 4px,transparent 4px 7px)"></span>Splitter bis ${dist(r.frag)}</span>`;
+  h+='</div><div class="small">Gelände: '+(r.terr?`berücksichtigt. Schraffiert: Druckschatten hinter Geländeerhebungen (${Math.round(r.shade*100)} % der Fläche). Dort ist die Belastung geringer, Schäden bleiben möglich.`:'nicht berücksichtigt')+'</div>';
+  $('slotinfo').innerHTML=h;
+}
+
 /* Vegetationsbrand */
 async function runVeg(R,nSlots,T0,terr,meta){
   const N=241, cell=2*R/(N-1), [k,R0]=$('vfuel').value.split(',').map(Number);
@@ -944,6 +1154,7 @@ function warnings(defs,meta,terr,manual){
     if(S.res.R>20000) w.push('Großes Rechengebiet: Auflösung rund 400 m, Wetter nur vom Freisetzungsort. Entfernungen über 10 km sind grobe Schätzungen.');
   }
   if(veg&&meta.some(s=>s.w.gust>2*Math.max(s.w.u10,1))) w.push('Starke Böen: Die Front kann sprunghaft und in wechselnde Richtung laufen.');
+  if(!manual){ const ms=modelSpread(S.res.T0); if(ms.rows.length>1&&ms.spread>45) w.push(`Die Wettermodelle weichen bei der Windrichtung um bis zu ${Math.round(ms.spread)}° voneinander ab. Richtung unsicher, vor Ort messen.`); }
   if(!terr) w.push($('useTerr').checked?'Höhendaten nicht abrufbar: ohne Geländeeinfluss gerechnet.':'Gelände abgeschaltet: ohne Geländeeinfluss gerechnet.');
   if(manual) w.push('Wetter von Hand vorgegeben: Wind und Schichtung bleiben über alle Zeitfenster gleich.');
   const el=$('warnings'); el.hidden=!w.length; el.innerHTML='<ul>'+w.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
@@ -966,6 +1177,8 @@ function drawRings(rings){
 $('showRings').onchange=()=>show(S.slot);
 function show(idx){
   const r=S.res; if(!r) return;
+  if(r.blast){ showBlast(); return; }
+  $('tlRow').hidden=false; clearFills();
   S.slot=idx; $('slider').value=idx;
   const pick=d=>idx===0?d.all:d.slots[idx-1];
   if(map){
@@ -989,6 +1202,13 @@ function show(idx){
 }
 function buildTable(){
   const r=S.res;
+  $('tblTitle').textContent=r.blast?'Wirkungszonen':'Zeittabelle'; $('tblNote').hidden=!!r.blast;
+  if(r.blast){
+    $('thead').innerHTML='<tr><th>Überdruck</th><th>bis</th><th>nach</th><th style="text-align:left">Wirkung</th></tr>';
+    $('tbody').innerHTML=[...r.zones].reverse().map(z=>`<tr><td><span class="sw" style="background:${z.col}"></span> ${z.kpa} kPa</td><td>${dist(z.r)}</td><td>${fmt(z.ta,z.ta<1?2:1)} s</td><td style="text-align:left;white-space:normal;min-width:180px">${z.txt}</td></tr>`).join('')
+      +(r.frag?`<tr><td>Splitter</td><td>${dist(r.frag)}</td><td></td><td style="text-align:left;white-space:normal">Gefahrenbereich für Splitter nach Faustformel UN IATG 01.80 (ungeschützt, Zutritt der Öffentlichkeit möglich)</td></tr>`:'');
+    return;
+  }
   $('thead').innerHTML='<tr><th>Zeitfenster</th><th>Wind</th><th>Kl.</th>'+r.layers.flatMap(d=>d.heads).map(x=>'<th>'+x+'</th>').join('')+'</tr>';
   const row=(i,first,w)=>'<tr><td>'+first+'</td><td>'+(w?Math.round(w.dir)+'° / '+fmt(w.u10)+' m/s':'')+'</td><td>'+(w?CLS[w.cls]:'')+'</td>'+r.layers.flatMap(d=>(i<0?d.all:d.slots[i]).cells).map(x=>'<td>'+x+'</td>').join('')+'</tr>';
   $('tbody').innerHTML=row(-1,'Gesamt',null)+r.meta.map((m,i)=>row(i,hhmm(m.t0)+'–'+hhmm(m.t1),m.w)).join('');

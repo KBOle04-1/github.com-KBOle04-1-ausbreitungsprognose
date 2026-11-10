@@ -1,6 +1,14 @@
 # Ausbreitungsprognose Gefahrstoff und Brandrauch
 
-Web-App für iPhone und iPad. Sie schätzt ab, wohin sich ein gasförmiger Gefahrstoff, eine Rauchgaswolke oder die Front eines Wald- oder Vegetationsbrandes ausbreitet, und zeigt das Ergebnis in Zeitfenstern von je 15 Minuten auf der Karte.
+Web-App für iPhone und iPad. Sie schätzt ab, wohin sich ein gasförmiger Gefahrstoff, eine Rauchgaswolke oder die Front eines Wald- oder Vegetationsbrandes ausbreitet, und zeigt das Ergebnis in Zeitfenstern von je 15 Minuten auf der Karte. Der Reiter Blast-Cast schätzt die Reichweite der Druckwelle einer Explosion.
+
+Die Kopfzeile hat drei Reiter:
+
+1. **Gefahrstoff und Rauch** mit den Schaltflächen Gefahrstoff, Brandrauch und Kombiniert
+2. **Vegetationsbrand**
+3. **Blast-Cast** (orange)
+
+Karte, Ortssuche und Berechnung sind auf Deutschland begrenzt.
 
 **Nur Orientierungshilfe.** Das Ergebnis ersetzt keine Messungen vor Ort, keine Fachberatung (z. B. TUIS, Fachberater Chemie) und keine zugelassenen Programme.
 
@@ -25,7 +33,7 @@ Für Wetter, Höhendaten und Karten ist eine Internetverbindung nötig. Nach ein
 
 Die **Zeittabelle** listet für jedes Zeitfenster Wind, Schichtung und Reichweite je Schwelle. Reichweite ist die größte Entfernung vom Freisetzungsort, in der die Schwelle überschritten wird.
 
-## Die vier Szenarien
+## Die Szenarien
 
 ### Gefahrstoff
 
@@ -64,6 +72,42 @@ Grenzen dieses Szenarios:
 - Flugfeuer ist nicht erfasst. Bei starkem Wind kann es die Front deutlich schneller vorantreiben.
 - Die Geschwindigkeiten beruhen auf Faustformeln (Anteil der Windgeschwindigkeit je Vegetation, z. B. rund 20 % bei trockenem Gras, rund 10 % bei Vollfeuer). Mit der beobachteten Frontgeschwindigkeit vergleichen und Vegetation oder Zustand anpassen.
 - Löschmaßnahmen sind nicht berücksichtigt.
+
+### Blast-Cast (Druckwelle)
+
+Schätzt, bis in welche Entfernung welcher Überdruck einer Explosion zu erwarten ist. Die Druckwelle läuft in Sekunden durch, deshalb gibt es hier keine Zeitfenster, sondern Wirkungszonen.
+
+**Gas-Luft-Gemisch**
+
+- Gas wählen und die Gasmenge in der Wolke in kg eintragen.
+- **Verdämmung:** Anteil der Verbrennungsenergie, der in die Druckwelle geht: 3 % frei im offenen Gelände, 10 % teilweise verdämmt (Bebauung, Anlagen), 20 % stark verdämmt (im Gebäude, im Behälter). Im Zweifel die höhere Stufe wählen.
+- Gerechnet wird über das TNT-Äquivalent. Das ist für Gaswolken grob: Im Nahbereich wird der Druck eher überschätzt.
+- Feuerball, Wärmestrahlung und Trümmerwurf sind nicht dargestellt.
+
+**Weltkriegsbombe**
+
+- Gewichtsklasse wählen (100 lb bis Luftmine 4000 lb). Gesamtmasse und Sprengstoffmasse sind Richtwerte und lassen sich überschreiben.
+- Gerechnet wird eine Detonation an der Oberfläche. Liegt die Bombe im Erdreich, wird die Druckwelle gedämpft; dafür kommen Erdauswurf und Erschütterung hinzu.
+- **Splitter fliegen viel weiter, als die Druckwelle wirkt.** Der gestrichelte Kreis zeigt den Splitterbereich nach der Faustformel der Vereinten Nationen (IATG 01.80: 634 × Gesamtmasse^(1/6), ungeschützt, Zutritt der Öffentlichkeit möglich). Den Evakuierungsradius legt der Kampfmittelräumdienst fest.
+
+**Wirkungszonen**
+
+| Überdruck | Wirkung |
+|---|---|
+| 2 kPa | Fensterbruch möglich, Verletzungen durch Glassplitter |
+| 7 kPa | Fenster und Türen zerstört, Dächer abgedeckt, Leichtbauten beschädigt |
+| 20 kPa | Schwere Gebäudeschäden, Mauerwerk teilweise zerstört |
+| 35 kPa | Trommelfellrisse, Wohngebäude weitgehend zerstört |
+| 100 kPa | Lebensgefahr durch den Druck selbst (Lungenschäden) |
+
+Die Tabelle „Wirkungszonen" nennt je Zone Radius und Laufzeit der Druckwelle.
+
+**Gelände und Wetter**
+
+- Das Gelände wird als Sichtlinie ausgewertet: Bereiche hinter Geländeerhebungen liegen im Druckschatten und sind schraffiert. Dort ist die Belastung geringer, Schäden bleiben möglich.
+- Luftdruck und Temperatur gehen in die Rechnung ein.
+- Bei stabiler Schichtung (Inversion) wird die Druckwelle zum Boden zurückgelenkt; Fensterbruch kann dann deutlich weiter reichen als der äußere Kreis. Die App warnt in diesem Fall, ebenso bei starkem Wind.
+- Gebäude schirmen ab, in Straßenzügen kann der Druck gebündelt und verstärkt werden. Beides ist nicht erfasst.
 
 ## Radien auf der Karte
 
@@ -108,6 +152,7 @@ Beispiel Chlor, 30 kg/min, Wind 3 m/s, neutrale Schichtung, ohne Gelände: AEGL-
 ## Wetter
 
 - **Vorhersage:** Open-Meteo mit 15-Minuten-Werten (in Mitteleuropa DWD ICON-D2): Wind, Böen, Temperatur, Luftfeuchte, Strahlung, Bewölkung, Niederschlag.
+- **Modellvergleich:** Zusätzlich werden fünf Wettermodelle abgefragt (ICON-D2 und ICON-EU des DWD, IFS des ECMWF, GFS, Météo-France) und Windrichtung und Windstärke zum Ereignisbeginn nebeneinander gezeigt. Weichen die Richtungen um mehr als 45° voneinander ab, warnt die App. Gerechnet wird weiter mit der 15-Minuten-Vorhersage.
 - **Messung:** Zum Vergleich wird die aktuelle Messung der nächsten DWD-Station angezeigt.
 - **Von Hand:** Für Messungen vor Ort oder Übungen lassen sich Windrichtung, Windstärke, Schichtung, Temperatur und Luftfeuchte vorgeben. Sie gelten dann für alle Zeitfenster.
 - **Schichtung:** Klassen A (sehr labil) bis F (sehr stabil), bestimmt aus Wind, Strahlung und Bewölkung. Stabile Schichtung (klare, windschwache Nacht) bedeutet schmale Wolke und große Reichweite.
@@ -140,6 +185,7 @@ Beispiel Chlor, 30 kg/min, Wind 3 m/s, neutrale Schichtung, ohne Gelände: AEGL-
 - Schichtung nach Pasquill/Turner, Zunahme des Windes mit der Höhe über ein Potenzgesetz.
 - Aufstieg der Brandfahne nach Briggs aus der Brandleistung.
 - Je Zeitfenster wird der höchste Wert aus drei Momentaufnahmen (alle 5 Minuten) gezeigt.
+- Blast-Cast: Spitzenüberdruck nach Kinney und Graham über den skalierten Abstand, Oberflächendetonation mit Faktor 1,8, Gas über TNT-Äquivalent (4,6 MJ/kg).
 - Vegetationsbrand: Die Feuerfront breitet sich als Ellipse in Windrichtung aus (je stärker der Wind, desto gestreckter). Die Brennstofffeuchte wird aus Temperatur und Luftfeuchte bestimmt (Simard), Niederschlag bremst zusätzlich. Die Ankunftszeit der Front wird Zelle für Zelle über das Raster berechnet.
 
 ## Datenquellen
@@ -149,6 +195,14 @@ Beispiel Chlor, 30 kg/min, Wind 3 m/s, neutrale Schichtung, ohne Gelände: AEGL-
 - Höhendaten: Terrain Tiles (Mapzen/AWS), ersatzweise Open-Meteo Höhen-API (Copernicus DEM)
 - Karten: OpenTopoMap und OpenStreetMap
 - Ortssuche: Nominatim (OpenStreetMap)
+
+## Nicht eingebundene Datenquellen
+
+- **Kachelmannwetter, Meteosol:** bieten keine frei nutzbare Schnittstelle für Apps. Stattdessen der Modellvergleich oben, der dieselben staatlichen Modelle nutzt.
+- **USGS EarthExplorer:** nur mit Anmeldung und ohne Schnittstelle für eine Web-App; die LIDAR-Daten dort decken die USA ab.
+- **OpenTopography:** hat für Deutschland keine LIDAR-Daten, nur weltweite Höhenmodelle mit rund 30 m Auflösung, also dieselbe Datenklasse, die die App schon nutzt. Der Abruf braucht einen persönlichen Schlüssel.
+- **BlenderGIS:** ist eine Erweiterung für das 3D-Programm Blender auf dem PC und keine Datenquelle.
+- Echte LIDAR-Höhendaten für Deutschland (DGM1, 1 m Auflösung) geben die Landesvermessungen heraus, je Bundesland auf eigenem Weg.
 
 ## Dateien
 
