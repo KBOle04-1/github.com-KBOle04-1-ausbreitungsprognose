@@ -442,7 +442,7 @@ function trackPuffs(P){
     const w=P.wx(t), u10=Math.max(w.u10,0.5);
     if (P.inst ? t===0 : t<P.durS)
       puffs.push({x:0,y:0,s:0,sy:P.sy0,sz:P.sz0,m:P.inst?P.massKg:P.rateKgS*dt,dh:0,ex:w.dx,ey:w.dy,L:0});
-    if (t>0 && t%300===0) snaps.push({t, cls:w.cls, zi:w.zi, puffs:puffs.map(p=>({...p}))});
+    if (t>0 && t%(P.inst?30:300)===0) snaps.push({t, cls:w.cls, zi:w.zi, puffs:puffs.map(p=>({...p}))});
     if (t>=tEnd) break;
     const pe=(P.urban?PEXP_U:PEXP_R)[w.cls];
     const dhFin=plumeRiseFinal(F,u10,w.cls,w.Tk,w.zi,P.H0);
@@ -622,7 +622,7 @@ const S={src:null, wx:null, wxKey:'', obs:null, terr:null, terrKey:'', res:null,
 
 const fmt=(v,d=1)=>v.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
 const hhmm=ts=>new Date(ts*1000).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
-const dist=m=>m<=0?'–':m<1000?Math.round(m/10)*10+' m':fmt(m/1000,1)+' km';
+const dist=m=>m<=0?'–':m<100?Math.max(5,Math.round(m/5)*5)+' m':m<1000?Math.round(m/10)*10+' m':fmt(m/1000,1)+' km';
 function status(t){ $('status').textContent=t; }
 
 const DE=[[47.2,5.8],[55.1,15.1]];   // Rechen- und Kartenbereich: Deutschland
@@ -765,7 +765,7 @@ async function loadWeather(){
     base+'&hourly='+v+',cloud_cover,surface_pressure'];
   let d=null, err=null;
   for(const u of variants){ try{ d=await fetchJSON(u); if(d&&(d.minutely_15||d.hourly)) break; d=null; }catch(e){ err=e; } }
-  if(!d) throw err||new Error('keine Daten');
+  if(!d) throw new Error('Wetterdaten nicht abrufbar (Internetverbindung prüfen). Ersatzweise Wetter von Hand vorgeben.');
   const m=d.minutely_15||d.hourly, h=d.hourly||{};
   const n=m.time.length, U=new Float32Array(n), V=new Float32Array(n);
   for(let i=0;i<n;i++){
@@ -959,7 +959,8 @@ async function run(){
     buildTable(); $('timeline').hidden=false; $('tablesec').hidden=false;
     $('slider').max=nSlots; show(0);
     const far=Math.max(...defs.flatMap(d=>d.all.reach));
-    if(map){ const b=boundsOf(S.res); map.fitBounds(far>0?L.latLngBounds(b).pad(-0.5+Math.min(0.5,far/R*0.6)):b); }
+    if(map){ const b=boundsOf(S.res); map.fitBounds(far>0?L.latLngBounds(b).pad(-0.5+Math.min(0.5,far/R*0.6)):b,{padding:[60,24]}); }
+    toMap();
     status(`Fertig: ${defs.map(d=>d.label).join(' + ')}, Beginn ${hhmm(T0)} Uhr, ${nSlots} Zeitfenster zu je 15 Minuten.`);
   }catch(e){ status('Fehler: '+e.message); console.error(e); }
   btn.disabled=false;
@@ -1119,6 +1120,7 @@ async function runBlast(manual,T0){
     status('Lade Wetterdaten …'); await loadWeather(); showWx();
     const W=S.wx; if(T0<W.t[0]||T0>W.t[W.t.length-1]) throw new Error('Für diesen Zeitpunkt liegen keine Wetterdaten vor. Ereignisbeginn anpassen oder Wetter von Hand vorgeben.');
   }
+  clearRivers();
   const w=wxAt(T0), p0=w.pres*100, c0=Math.sqrt(1.4*287*w.Tk), kind=S.bkind, ws=[];
   const pz=(Wt,l)=>{ const r=blastRadius(Wt,l.kpa*1000,p0); return {name:l.kpa+' kPa',r,col:l.col,fill:true,txt:l.txt+` (Druckwelle nach ${fmt(r/c0,r/c0<1?2:1)} s)`}; };
   let zones, label, title, hs=1.5, shadeName='Druckschatten';
@@ -1182,9 +1184,12 @@ async function runBlast(manual,T0){
   if(!terr) ws.push($('useTerr').checked?'Höhendaten nicht abrufbar: ohne Geländeschatten gerechnet.':'Gelände abgeschaltet: ohne Geländeschatten gerechnet.');
   const el=$('warnings'); el.hidden=false; el.innerHTML='<ul>'+ws.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
   buildTable(); $('timeline').hidden=false; $('tablesec').hidden=false; show(0);
-  if(map) map.fitBounds(L.latLng(S.src.lat,S.src.lon).toBounds(2.2*rAll));
+  if(map) map.fitBounds(L.latLng(S.src.lat,S.src.lon).toBounds(2.2*rAll),{padding:[70,24]});
+  toMap();
   status('Fertig: '+title+'.');
 }
+// Auf dem Telefon liegt die Karte über den Eingaben: nach der Rechnung dorthin zurückspringen
+function toMap(){ try{ if(window.innerWidth<900) $('mapwrap').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} }
 function clearFills(){ (S.fills||[]).forEach(o=>map&&map.removeLayer(o)); S.fills=[]; }
 const zsw=z=>`<span class="sw" style="background:${z.fill?z.col:`repeating-linear-gradient(90deg,${z.col} 0 4px,transparent 4px ${z.dash?7:4}px)`}"></span>`;
 function showBlast(){
@@ -1194,7 +1199,7 @@ function showBlast(){
     (S.overlays||[]).forEach(o=>map.removeLayer(o)); S.overlays=[]; clearFills();
     for(const z of r.zones) if(z.fill) S.fills.push(L.circle([r.lat,r.lon],{radius:z.r,color:z.col,weight:1,fillColor:z.col,fillOpacity:0.22,interactive:false}).addTo(map));
     if(r.img) S.overlays.push(L.imageOverlay(r.img,boundsOf(r),{opacity:1,interactive:false}).addTo(map));
-    drawRings(r.zones.map((z,i)=>{ const a=(-80+32*i)*Math.PI/180; return {r:z.r,far:[Math.sin(a),Math.cos(a)],color:z.col,dash:!!z.dash,text:z.name+' · '+dist(z.r)}; }));
+    drawRings(r.zones.map((z,i)=>{ const a=[0,90,180,270,45,135,225,315][(r.zones.length-1-i)%8]*Math.PI/180; return {r:z.r,far:[Math.sin(a),Math.cos(a)],color:z.col,dash:!!z.dash,text:z.name+' · '+dist(z.r)}; }));
   }
   $('slotlabel').textContent=r.title;
   let h='<div class="reach">';
@@ -1208,6 +1213,7 @@ async function runVeg(R,nSlots,T0,terr,meta){
   const N=241, cell=2*R/(N-1), [k,R0]=$('vfuel').value.split(',').map(Number);
   const V={N,R,terrain:terr,k,R0,state:+$('vstate').value,r0:num('vdia',20)/2,tEnd:nSlots*900,wx:t=>wxAt(T0+t)};
   const name=$('vfuel').selectedOptions[0].textContent;
+  clearRivers();
   status('Berechne Feuerfront …'); await pause();
   const arr=spreadFire(V), tEnd=V.tEnd;
   const d={label:'Vegetationsbrand ('+name+')',heads:['Spitze m/min','Fläche ha','Front bis'],veg:true,slots:[]};
@@ -1268,6 +1274,7 @@ function warnings(defs,meta,terr,manual){
   if(defs.some(d=>d.all.edge)) w.push((veg?'Die Feuerfront':'Die Gefahrenzone')+' erreicht den Rand des Rechengebiets. Rechengebiet vergrößern.');
   for(const d of defs) if(d.none) w.push(d.label+': Keine Schwelle wird am Boden überschritten. Eine aufsteigende Fahne kann über das Gebiet hinwegziehen und weiter entfernt oder an höher gelegenem Gelände auftreffen.');
   if(defs.some(d=>d.P&&d.P.river)) w.push(`Fließgewässer einbezogen mit ${fmt(defs.find(d=>d.P&&d.P.river).P.river.v,2)} m/s: Die Lenkung entlang des Gewässers ist eine grobe Näherung. Tiefliegende Uferbereiche, Brücken, Schleusen und Ortslagen am Wasser gesondert betrachten.`);
+  if(defs.some(d=>d.label==='Ammoniak')) w.push('Ammoniak aus druckverflüssigter Lagerung tritt kalt und als Nebel aus und verhält sich anfangs wie ein Schwergas: Im Nahbereich bodennah und in Senken rechnen, auch wenn Ammoniakgas leichter als Luft ist.');
   if(defs.some(d=>d.dense)) w.push('Schwergas: Die Wolke breitet sich in Bodennähe flach aus und sammelt sich in Senken, Kellern und Tälern. Nahbereich und Tieflagen sind im Modell unterschätzt.');
   if(veg){
     w.push('Die Vegetation gilt überall als gleich und brennbar. Straßen, Gewässer, Äcker und Ortschaften als Brandriegel selbst in der Karte berücksichtigen.');
@@ -1288,18 +1295,22 @@ function warnings(defs,meta,terr,manual){
 
 /* ---------- Anzeige ---------- */
 function drawRings(rings){
-  const r=S.res;
+  const r=S.res; S.ringDefs=rings;
   (S.rings||[]).forEach(o=>map.removeLayer(o)); S.rings=[];
   if(!$('showRings').checked) return;
   const cosl=Math.cos(r.lat*Math.PI/180), ll=p=>[r.lat+p[1]/111320, r.lon+p[0]/(111320*cosl)];
+  const mpp=40075016*cosl/(256*Math.pow(2,map.getZoom()));       // Meter je Bildpunkt
   for(const g of rings){
     if(!(g.r>0)) continue;
-    const q=Math.hypot(g.far[0],g.far[1])||1, end=ll([g.far[0]/q*g.r,g.far[1]/q*g.r]);
+    const q=Math.hypot(g.far[0],g.far[1])||1, ux=g.far[0]/q, uy=g.far[1]/q, end=ll([ux*g.r,uy*g.r]);
     S.rings.push(L.circle([r.lat,r.lon],{radius:g.r,color:g.color,weight:3,fill:false,dashArray:g.dash?'7 7':null,interactive:false}).addTo(map));
+    if(g.r/mpp<16) continue;                                     // zu klein für eine lesbare Beschriftung: erst beim Hineinzoomen
     S.rings.push(L.polyline([[r.lat,r.lon],end],{color:g.color,weight:2,dashArray:'2 6',interactive:false}).addTo(map));
-    S.rings.push(L.marker(end,{interactive:false,icon:L.divIcon({className:'',iconSize:[0,0],html:`<span class="rlab" style="border-color:${g.color}">${g.text}</span>`})}).addTo(map));
+    const tx=ux>0.38?'8px':ux<-0.38?'calc(-100% - 8px)':'-50%', ty=uy>0.38?'calc(-100% - 8px)':uy<-0.38?'8px':'-50%';   // Beschriftung zeigt vom Mittelpunkt weg
+    S.rings.push(L.marker(end,{interactive:false,icon:L.divIcon({className:'',iconSize:[0,0],html:`<span class="rlab" style="border-color:${g.color};transform:translate(${tx},${ty})">${g.text}</span>`})}).addTo(map));
   }
 }
+if(map) map.on('zoomend',()=>{ if(S.res&&S.ringDefs) drawRings(S.ringDefs); });
 $('showRings').onchange=()=>show(S.slot);
 function show(idx){
   const r=S.res; if(!r) return;

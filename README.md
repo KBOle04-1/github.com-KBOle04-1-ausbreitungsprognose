@@ -228,6 +228,19 @@ Beispiel Chlor, 30 kg/min, Wind 3 m/s, neutrale Schichtung, ohne Gelände: AEGL-
 - Karten: OpenTopoMap und OpenStreetMap
 - Ortssuche: Nominatim (OpenStreetMap)
 
+## Plausibilitätsprüfung (Stand 10.11.2026)
+
+Geprüft wurde mit nachgebildeten Datenquellen (Wetter, Höhen, Gewässer, Pegel), weil die echten Dienste aus der Prüfumgebung nicht erreichbar waren.
+
+- **Ausbreitung:** Das Modell trifft die analytische Gauß-Lösung für alle Schichtungsklassen, Freifläche und Bebauung, Boden- und Höhenquelle auf 1 bis 11 %. Die größte Abweichung (sehr stabile Schichtung) kommt von der Rasterweite. Die Masse einer Einzelwolke bleibt erhalten (998 von 1000 kg).
+- **Vegetationsbrand:** Kopf, Rücken und Breite der Brandellipse stimmen mit der Sollform überein.
+- **Blast-Cast:** 10 kPa bei einem skalierten Abstand von 10 m/kg^(1/3), wie in der Literatur. Die BLEVE-Feuerballradien decken sich mit den Angaben von Transport Canada.
+- **Ablauf:** Alle Reiter und Schaltflächen, Ortssuche, Zeitleiste, Abspielen, Radien, Tabelle, Gewässer und Pegel liefen ohne Programmfehler, ebenso der Ausfall aller Datenquellen und ein Zeitpunkt außerhalb der Vorhersage.
+
+Nicht prüfbar waren die echten Datendienste auf dem Gerät: ob HLNUG-Pegel und Gewässerabruf vom iPhone aus zugelassen sind und ob jedes der fünf Wettermodelle antwortet. Fällt eine Quelle aus, meldet die App das und rechnet ohne sie weiter.
+
+Die Beschriftung der Radien erscheint erst, wenn der Kreis auf der Karte groß genug ist; bei kleinen inneren Zonen hineinzoomen.
+
 ## Nicht eingebundene Datenquellen
 
 - **Kachelmannwetter, Meteosol:** Eine frei nutzbare Schnittstelle für Apps ist für beide nicht bekannt (Stand November 2026, nicht abschließend geprüft). Stattdessen der Modellvergleich oben, der dieselben staatlichen Modelle nutzt.
