@@ -41,6 +41,16 @@ Die **Zeittabelle** listet für jedes Zeitfenster Wind, Schichtung und Reichweit
 - **Kontinuierlich:** Austrittsrate in kg/min und Dauer. **Schlagartig:** Gesamtmasse in kg.
 - Darstellung: gelb, orange, rot für Schwelle 1 bis 3.
 
+#### Fließgewässer und schwere Gase
+
+Mit dem Häkchen „Fließgewässer einbeziehen" (Gefahrstoff und Kombiniert) werden Flüsse, Kanäle und bei kleinem Rechengebiet auch Bäche aus OpenStreetMap geladen und blau in die Karte gezeichnet.
+
+- **Schwere Gase** (z. B. Chlor, Propan, Schwefeldioxid) bleiben am Boden. Über dem Gewässer werden sie entlang des Laufs gelenkt und treiben zusätzlich mit der Strömung. Je schwächer der Wind, desto stärker die Lenkung; mit zunehmender Verdünnung lässt sie nach.
+- **Leichte Gase** werden nur bei stabiler Schichtung und deutlich schwächer gelenkt.
+- Bei kräftigem Wind quer zum Gewässer zieht die Wolke darüber hinweg; das Gewässer ändert dann wenig.
+- **Fließgeschwindigkeit:** In Hessen wird der Abfluss am nächsten Pegel des HLNUG abgerufen (bevorzugt am selben Gewässer, sonst der nächstgelegene im Umkreis von 15 km) und daraus die Geschwindigkeit geschätzt (v ≈ 0,35 · Q^0,25, etwa ± 50 %). Der Wert steht im Feld und lässt sich überschreiben, z. B. mit einer eigenen Messung (Treibgut über eine bekannte Strecke stoppen). Außerhalb Hessens von Hand eintragen.
+- Die Lenkung ist eine grobe Näherung. Tiefliegende Uferbereiche, Brücken, Schleusen und Ortslagen am Wasser gesondert betrachten. Im Wasser gelöste oder aufschwimmende Stoffe werden nicht gerechnet.
+
 ### Brandrauch
 
 - Brandleistung in MW (Voreinstellungen von Pkw bis Industrie-Großbrand), Brandfläche, Branddauer, Brandgut.
@@ -90,7 +100,27 @@ Schätzt, bis in welche Entfernung welcher Überdruck einer Explosion zu erwarte
 - Gerechnet wird eine Detonation an der Oberfläche. Liegt die Bombe im Erdreich, wird die Druckwelle gedämpft; dafür kommen Erdauswurf und Erschütterung hinzu.
 - **Splitter fliegen viel weiter, als die Druckwelle wirkt.** Der gestrichelte Kreis zeigt den Splitterbereich nach der Faustformel der Vereinten Nationen (IATG 01.80: 634 × Gesamtmasse^(1/6), ungeschützt, Zutritt der Öffentlichkeit möglich). Den Evakuierungsradius legt der Kampfmittelräumdienst fest.
 
-**Wirkungszonen**
+**BLEVE (Behälterzerknall mit Feuerball)**
+
+Für Behälter mit druckverflüssigtem Gas (Propan, Butan), die im Feuer versagen: Propangasflaschen (11 und 33 kg), Flüssiggastanks (1,2 t, 2,1 t, 2,9 t), Lkw-Tankwagen (ca. 9 t), Lkw-Sattelzug (ca. 22 t) und Eisenbahn-Kesselwagen (ca. 50 t). Inhalt und Füllgrad lassen sich anpassen.
+
+| Zone | Bedeutung |
+|---|---|
+| Feuerball | Radius des Feuerballs; Durchmesser 5,8 · M^(1/3) in Metern, M in kg |
+| Lebensgefahr | Wärmestrahlung: schwerste Verbrennungen ohne Schutz (Wärmedosis 1000) |
+| Verbrennung 2. Grades | an ungeschützter Haut (Wärmedosis 250) |
+| Schmerzgrenze | Schmerz, Verbrennungen 1. Grades (Wärmedosis 125) |
+| Fensterbruch 2 kPa | Druckwelle, grob geschätzt |
+| Einsatzkräfte | Mindestabstand in Schutzkleidung: 4 Feuerballradien, mindestens 90 m |
+| Evakuierung mindestens / empfohlen | 15 bzw. 30 Feuerballradien wegen Trümmerflug |
+
+- Die Wärmedosis berücksichtigt die Dauer des Feuerballs und die Dämpfung durch die Luftfeuchte (aus den Wetterdaten).
+- Die Abstände für Einsatzkräfte und Evakuierung folgen der Empfehlung von Transport Canada („BLEVE – Response and Prevention").
+- Trümmer sind die weitreichendste Gefahr. Behälterteile fliegen bevorzugt in Richtung der Behälterenden, einzelne weiter als der Mindestradius.
+- Der Zeitpunkt des Versagens ist nicht vorhersagbar; bei direkter Beflammung kann ein Behälter binnen Minuten bersten.
+- Gelände: Schraffiert ist der Strahlungsschatten hinter Erhebungen, gesehen vom Mittelpunkt des Feuerballs.
+
+**Wirkungszonen der Druckwelle (Gasgemisch und Bombe)**
 
 | Überdruck | Wirkung |
 |---|---|
@@ -193,6 +223,8 @@ Beispiel Chlor, 30 kg/min, Wind 3 m/s, neutrale Schichtung, ohne Gelände: AEGL-
 - Wettervorhersage: Open-Meteo
 - Stationsmessung: Bright Sky (DWD)
 - Höhendaten: Terrain Tiles (Mapzen/AWS), ersatzweise Open-Meteo Höhen-API (Copernicus DEM)
+- Pegel und Abfluss: HLNUG (Hessen)
+- Fließgewässer: OpenStreetMap über die Overpass-Schnittstelle
 - Karten: OpenTopoMap und OpenStreetMap
 - Ortssuche: Nominatim (OpenStreetMap)
 

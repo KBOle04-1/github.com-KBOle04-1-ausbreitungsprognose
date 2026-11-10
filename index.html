@@ -158,6 +158,12 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
         <label>Austrittshöhe m<input type="number" id="hrel" value="1" min="0" step="1"></label>
       </div>
       <label class="check combo" hidden><input type="checkbox" id="lift" checked>Stoff wird im Brand freigesetzt und steigt mit dem Rauch auf</label>
+      <label class="check"><input type="checkbox" id="useRiver">Fließgewässer einbeziehen</label>
+      <div id="riverBox" hidden style="display:grid;gap:8px">
+        <div class="inline"><label style="flex:1">Fließgeschwindigkeit m/s<input type="number" id="rvel" value="0.5" min="0" max="5" step="0.1"></label><button id="rgauge" style="align-self:end">Pegel abrufen</button></div>
+        <div class="small">Schwere Gase bleiben am Boden und folgen dem Gewässerlauf: Sie werden entlang des Gewässers gelenkt und treiben mit der Strömung. Bei leichten Gasen wirkt das nur bei stabiler Schichtung und schwächer. Die Gewässer kommen aus OpenStreetMap, die Fließgeschwindigkeit wird in Hessen aus dem Abfluss am nächsten HLNUG-Pegel geschätzt.</div>
+      </div>
+      <div id="riverinfo" class="small"></div>
     </div>
 
     <div id="fireBox" style="display:none;gap:10px">
@@ -182,7 +188,7 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
     </div>
 
     <div id="blastBox" style="display:none;gap:10px">
-      <div class="seg"><button id="bGas" aria-pressed="true">Gas-Luft-Gemisch</button><button id="bBomb" aria-pressed="false">Weltkriegsbombe</button></div>
+      <div class="seg four"><button id="bGas" aria-pressed="true">Gasgemisch</button><button id="bBomb" aria-pressed="false">Weltkriegs&shy;bombe</button><button id="bBleve" aria-pressed="false">BLEVE</button></div>
       <div id="bGasBox" style="display:grid;gap:10px">
         <label>Gas<select id="bfuel">
           <option value="50">Methan / Erdgas</option>
@@ -217,6 +223,23 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
           <label>Sprengstoff kg (als TNT)<input type="number" id="bneq" value="120" min="0.1" step="1"></label>
         </div>
         <div class="small">Richtwerte je Gewichtsklasse, beide Felder lassen sich überschreiben. Gerechnet wird eine Detonation an der Oberfläche.</div>
+      </div>
+      <div id="bBleveBox" hidden style="display:grid;gap:10px">
+        <label>Behälter<select id="bvessel">
+          <option value="11">Propangasflasche 11 kg</option>
+          <option value="33">Propangasflasche 33 kg</option>
+          <option value="1200">Flüssiggastank 1,2 t (2700 l)</option>
+          <option value="2100">Flüssiggastank 2,1 t (4850 l)</option>
+          <option value="2900">Flüssiggastank 2,9 t (6400 l)</option>
+          <option value="9000">Lkw-Tankwagen, Verteilerfahrzeug (ca. 9 t)</option>
+          <option value="22000" selected>Lkw-Sattelzug Flüssiggas (ca. 22 t)</option>
+          <option value="50000">Eisenbahn-Kesselwagen (ca. 50 t)</option>
+        </select></label>
+        <div class="row">
+          <label>Inhalt bei voller Füllung kg<input type="number" id="bvmass" value="22000" min="1" step="1"></label>
+          <label>Füllgrad %<input type="number" id="bvfill" value="100" min="1" max="100" step="5"></label>
+        </div>
+        <div class="small">BLEVE: Ein Behälter mit druckverflüssigtem Gas (Propan, Butan) versagt im Feuer. Der Inhalt verdampft schlagartig und verbrennt als Feuerball. Bemessen werden Feuerball, Wärmestrahlung, Druckwelle sowie die Abstände für Einsatzkräfte und Evakuierung.</div>
       </div>
       <div class="small">Blast-Cast zeigt, bis in welche Entfernung welcher Überdruck der Druckwelle zu erwarten ist. Die Druckwelle läuft in Sekunden durch, deshalb gibt es hier keine Zeitfenster.</div>
     </div>
@@ -296,8 +319,8 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
   <section>
     <h2>Modell und Grenzen</h2>
     <div class="small">
-      Gauß-Wolkenmodell (Lagrange-Puffs, alle 30 s) mit Briggs-Ausbreitungsparametern, Schichtung nach Pasquill/Turner aus Wind, Globalstrahlung und Bewölkung, Windprofil mit der Höhe, Brandüberhöhung nach Briggs. Vegetationsbrand: Ausbreitung der Feuerfront als Ellipse in Windrichtung nach Faustformeln (Anteil der Windgeschwindigkeit je Vegetation), Brennstofffeuchte aus Temperatur und Luftfeuchte, Hangneigung. Gelände: Windumlenkung an Hängen, Kaltluftabfluss bei stabiler Schichtung, hangabwärts fließende Schwergase und Auftreffen der Fahne auf höheres Gelände, jeweils als vereinfachte Korrektur. Blast-Cast: Spitzenüberdruck nach Kinney und Graham über den skalierten Abstand, Oberflächendetonation mit Faktor 1,8, Gas über TNT-Äquivalent, Splitterbereich nach UN IATG 01.80; das Gelände wird als Sichtlinie ausgewertet (Druckschatten).<br><br>
-      Datenquellen: Open-Meteo (DWD ICON-D2, 15-Minuten-Werte; Modellvergleich mit ICON-EU, ECMWF IFS, GFS und Météo-France), Bright Sky (DWD-Stationsmessung), Höhendaten Mapzen/AWS Terrain Tiles oder Open-Meteo (Copernicus DEM), Karten OpenTopoMap und OpenStreetMap, Suche Nominatim.<br><br>
+      Gauß-Wolkenmodell (Lagrange-Puffs, alle 30 s) mit Briggs-Ausbreitungsparametern, Schichtung nach Pasquill/Turner aus Wind, Globalstrahlung und Bewölkung, Windprofil mit der Höhe, Brandüberhöhung nach Briggs. Vegetationsbrand: Ausbreitung der Feuerfront als Ellipse in Windrichtung nach Faustformeln (Anteil der Windgeschwindigkeit je Vegetation), Brennstofffeuchte aus Temperatur und Luftfeuchte, Hangneigung. Gelände: Windumlenkung an Hängen, Kaltluftabfluss bei stabiler Schichtung, hangabwärts fließende Schwergase und Auftreffen der Fahne auf höheres Gelände, jeweils als vereinfachte Korrektur. Fließgewässer: Lenkung bodennaher Wolken entlang des Gewässerlaufs und Drift mit der Strömung, Fließgeschwindigkeit geschätzt aus dem Abfluss (v ≈ 0,35 · Q^0,25). BLEVE: Feuerball nach TNO/CCPS (Durchmesser 5,8 · M^(1/3)), Wärmedosis mit Luftfeuchte-Dämpfung, Abstände 4, 15 und 30 Feuerballradien nach Transport Canada. Blast-Cast: Spitzenüberdruck nach Kinney und Graham über den skalierten Abstand, Oberflächendetonation mit Faktor 1,8, Gas über TNT-Äquivalent, Splitterbereich nach UN IATG 01.80; das Gelände wird als Sichtlinie ausgewertet (Druckschatten).<br><br>
+      Datenquellen: Open-Meteo (DWD ICON-D2, 15-Minuten-Werte; Modellvergleich mit ICON-EU, ECMWF IFS, GFS und Météo-France), Bright Sky (DWD-Stationsmessung), HLNUG (Pegel, Abfluss), Overpass/OpenStreetMap (Fließgewässer), Höhendaten Mapzen/AWS Terrain Tiles oder Open-Meteo (Copernicus DEM), Karten OpenTopoMap und OpenStreetMap, Suche Nominatim.<br><br>
       <strong>Nur Orientierungshilfe.</strong> Das Ergebnis ersetzt keine Messungen vor Ort, keine Fachberatung (z. B. TUIS, Fachberater Chemie) und keine zugelassenen Programme. Schwergase, Aerosole, chemische Umwandlung, Niederschlag, Gebäudeumströmung und kleinräumige Talwinde sind nicht oder nur grob erfasst. Die voreingestellten Schwellenwerte vor Verwendung mit der aktuellen AEGL-Liste abgleichen.<br><br>
       <a href="https://github.com/KBOle04-1/github.com-KBOle04-1-ausbreitungsprognose#readme">Hinweise zum Nachschlagen (Readme)</a>
     </div>
@@ -428,6 +451,14 @@ function trackPuffs(P){
       const sp=u10*Math.min(2.5,Math.pow(Math.max(Hp,10)/10,pe));
       let vx=w.dx*sp, vy=w.dy*sp;
       if (T) [vx,vy]=terrainWind(T,p.x,p.y,vx,vy,w.cls,P.dense,p.s,Hp,u10);
+      if (P.river && Hp<20){            // Fließgewässer: Lenkung entlang des Laufs und Drift mit der Strömung
+        const Rv=P.river, ci=Math.round((p.x+Rv.R)/Rv.cell), cj=Math.round((p.y+Rv.R)/Rv.cell);
+        if (ci>=0&&cj>=0&&ci<Rv.N&&cj<Rv.N){
+          const tx=Rv.tx[cj*Rv.N+ci], ty=Rv.ty[cj*Rv.N+ci];
+          const c=P.dense?Math.min(0.9,1.4/Math.max(u10,1))*Math.exp(-p.s/5000):(w.cls>=4?0.3:0);   // bei schwachem Wind stärker
+          if ((tx||ty)&&c>0){ const al=vx*tx+vy*ty; vx+=c*(al*tx-vx)+c*Rv.v*tx; vy+=c*(al*ty-vy)+c*Rv.v*ty; }
+        }
+      }
       const v=Math.hypot(vx,vy)||0.1, ds=v*dt;
       const a=sigma(w.cls,p.s,P.urban), b=sigma(w.cls,p.s+ds,P.urban);
       p.sy+=b[0]-a[0]; p.sz+=b[1]-a[1];
@@ -550,7 +581,17 @@ function blastShadow(T, hs, hr){
   }
   return out;
 }
-if (typeof module!=='undefined') module.exports={stabClass,sigma,trackPuffs,evalField,prepTerrain,plumeRiseFinal,fuelMoisture,rosParams,spreadFire,blastRatio,blastRadius,blastShadow};
+
+// BLEVE: Feuerball und Wärmestrahlung. M = Masse Flüssiggas kg, Tc °C, rh %
+function bleve(M, Tc, rh){
+  const D=5.8*Math.cbrt(M), t=M<30000?0.45*Math.cbrt(M):2.6*Math.pow(M,1/6), H=0.75*D;
+  const E=Math.min(350,0.3*M*46000/(Math.PI*D*D*t));                       // Abstrahlung der Oberfläche kW/m²
+  const pw=Math.max(rh,5)/100*610.94*Math.exp(17.625*Tc/(Tc+243.04));       // Wasserdampfdruck Pa
+  const q=x=>{ const L=Math.hypot(x,H), tau=Math.min(1,2.02*Math.pow(pw*Math.max(L-D/2,1),-0.09)); return tau*E*(D/2)**2/(L*L); };
+  const rFor=tdu=>{ const qn=Math.pow(tdu/t,0.75); if(q(0)<qn) return 0; let lo=0, hi=50000; for(let i=0;i<60;i++){ const m=(lo+hi)/2; if(q(m)>qn) lo=m; else hi=m; } return lo; };
+  return {D,t,H,E,q,rFor,Wtnt:M*60/4600};
+}
+if (typeof module!=='undefined') module.exports={stabClass,sigma,trackPuffs,evalField,prepTerrain,plumeRiseFinal,fuelMoisture,rosParams,spreadFire,blastRatio,blastRadius,blastShadow,bleve};
 </script>
 
 <script>
@@ -676,11 +717,17 @@ function setTab(t){
   setMode(t==='cloud'?(S.cloudMode||'gas'):t);
 }
 $('tabCloud').onclick=()=>setTab('cloud'); $('tabVeg').onclick=()=>setTab('veg'); $('tabBlast').onclick=()=>setTab('blast');
-function setBlastKind(bomb){
-  S.bomb=bomb; $('bGas').setAttribute('aria-pressed',!bomb); $('bBomb').setAttribute('aria-pressed',bomb);
-  $('bGasBox').hidden=bomb; $('bBombBox').hidden=!bomb;
+function setBlastKind(k){
+  S.bkind=k;
+  for(const [id,q] of [['bGas','gas'],['bBomb','bomb'],['bBleve','bleve']]) $(id).setAttribute('aria-pressed',k===q);
+  $('bGasBox').hidden=k!=='gas'; $('bBombBox').hidden=k!=='bomb'; $('bBleveBox').hidden=k!=='bleve';
 }
-$('bGas').onclick=()=>setBlastKind(false); $('bBomb').onclick=()=>setBlastKind(true);
+S.bkind='gas';
+$('bGas').onclick=()=>setBlastKind('gas'); $('bBomb').onclick=()=>setBlastKind('bomb'); $('bBleve').onclick=()=>setBlastKind('bleve');
+$('bvessel').onchange=()=>{ $('bvmass').value=$('bvessel').value; };
+$('useRiver').onchange=()=>{ $('riverBox').hidden=!$('useRiver').checked; if(!$('useRiver').checked){ $('riverinfo').textContent=''; clearRivers(); } };
+$('rvel').oninput=()=>{ S.rvelManual=true; };
+$('rgauge').onclick=async()=>{ if(!S.src){ status('Zuerst den Ort wählen.'); return; } S.rvelManual=false; $('riverinfo').textContent='Rufe Pegel ab …'; $('riverinfo').textContent=await loadGauge(S.riverName||''); };
 $('bbomb').onchange=()=>{ const [a,n]=$('bbomb').value.split(','); $('bauw').value=a; $('bneq').value=n; };
 function urbNote(){
   $('urbnote').innerHTML=$('urban').value==='1'
@@ -923,6 +970,7 @@ $('run').onclick=run;
 async function runCloud(R,nSlots,T0,terr){
   const w0=wxAt(T0), vm=22.414*w0.Tk/273.15*1013.25/w0.pres, combo=S.mode==='combo';
   const base={nSlots,R,terrain:terr,urban:$('urban').value==='1',wx:t=>wxAt(T0+t),fireMW:0,dense:false,sz0:1};
+  if(S.mode!=='fire'&&$('useRiver').checked) base.river=await riverSetup(R); else clearRivers();
   const readThr=ids=>ids.map(id=>{const v=parseFloat($(id).value); return v>0?v:null;});
   const mw=num('mw',10), fsy=Math.max(2,Math.sqrt(num('farea',100))/4.3);
   const defs=[];
@@ -1003,6 +1051,62 @@ function render(f,thr,N,hatch){
   return cv.toDataURL('image/png');
 }
 
+/* Fließgewässer */
+const HLNUG_Q='https://www.hlnug.de/static/pegel/wiskiweb3/data/internet/layers/20/index.json';
+function clearRivers(){ (S.riverLines||[]).forEach(o=>map&&map.removeLayer(o)); S.riverLines=[]; }
+async function loadGauge(name){
+  let a;
+  try{ a=await fetchJSON(HLNUG_Q); }
+  catch(e){ return 'Pegeldaten des HLNUG nicht abrufbar. Fließgeschwindigkeit bitte von Hand eintragen (Treibgut über eine bekannte Strecke stoppen).'; }
+  const {lat,lon}=S.src, cosl=Math.cos(lat*Math.PI/180); let same=null, any=null;
+  for(const st of a){
+    const la=+st.station_latitude, lo=+st.station_longitude, q=+st.ts_value;
+    if(!(q>=0)||!la||!lo) continue;
+    const d=Math.hypot((la-lat)*111.32,(lo-lon)*111.32*cosl), o={d,q,st};
+    if(name&&String(st['EXTERN-WATERS-NAME']||'').trim().toLowerCase()===name.trim().toLowerCase()){ if(!same||d<same.d) same=o; }
+    if(!any||d<any.d) any=o;
+  }
+  const g=(same&&same.d<=40)?same:(any&&any.d<=15?any:null);
+  if(!g) return 'Kein HLNUG-Pegel in der Nähe (das Angebot deckt nur Hessen ab). Fließgeschwindigkeit bitte von Hand eintragen.';
+  const v=Math.min(3.5,Math.max(0.05,0.35*Math.pow(g.q,0.25)));
+  if(!S.rvelManual) $('rvel').value=v.toFixed(2);
+  const t=g.st.timestamp?hhmm(Math.floor(new Date(g.st.timestamp).getTime()/1000))+' Uhr':'';
+  return `Pegel ${g.st.station_name} (${g.st['EXTERN-WATERS-NAME']||'Gewässer unbekannt'}, ${fmt(g.d,1)} km entfernt${t?', '+t:''}): Abfluss ${fmt(g.q,g.q<10?2:0)} m³/s, daraus geschätzt rund ${fmt(v,2)} m/s. Die Schätzung ist grob (etwa ± 50 %)`+(g===same?'.':'; der Pegel liegt an einem anderen Gewässer.');
+}
+async function riverSetup(R){
+  const {lat,lon}=S.src, N=gridN(R), cell=2*R/(N-1), cosl=Math.cos(lat*Math.PI/180), info=$('riverinfo');
+  clearRivers(); info.textContent=''; status('Lade Fließgewässer …');
+  const dLat=R/111320, dLon=R/(111320*cosl), types=R<=5000?'river|canal|stream':'river|canal';
+  const q=`[out:json][timeout:25];way["waterway"~"^(${types})$"](${(lat-dLat).toFixed(5)},${(lon-dLon).toFixed(5)},${(lat+dLat).toFixed(5)},${(lon+dLon).toFixed(5)});out geom;`;
+  let ways;
+  try{ ways=((await fetchJSON('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q))).elements||[]).filter(w=>w.geometry&&w.geometry.length>1); }
+  catch(e){ info.textContent='Fließgewässer nicht abrufbar ('+e.message+'). Es wird ohne Gewässer gerechnet.'; return null; }
+  if(!ways.length){ info.textContent='Im Rechengebiet sind keine Fließgewässer verzeichnet.'; return null; }
+  const big=w=>w.tags&&w.tags.waterway!=='stream';
+  ways.sort((a,b)=>big(a)-big(b));                     // Bäche zuerst, Flüsse überschreiben
+  const tx=new Float32Array(N*N), ty=new Float32Array(N*N), cw=Math.max(1,Math.round(60/cell));
+  let near={d:Infinity,name:''};
+  for(const w of ways){
+    const g=w.geometry, name=(w.tags&&w.tags.name)||'';
+    for(let i=0;i<g.length-1;i++){
+      const x0=(g[i].lon-lon)*111320*cosl, y0=(g[i].lat-lat)*111320, x1=(g[i+1].lon-lon)*111320*cosl, y1=(g[i+1].lat-lat)*111320, L=Math.hypot(x1-x0,y1-y0);
+      if(L<1) continue;
+      const ux=(x1-x0)/L, uy=(y1-y0)/L, n=Math.max(1,Math.ceil(2*L/cell));
+      for(let k=0;k<=n;k++){
+        const x=x0+(x1-x0)*k/n, y=y0+(y1-y0)*k/n, d=Math.hypot(x,y);
+        if(name&&d<near.d) near={d,name};
+        const ci=Math.round((x+R)/cell), cj=Math.round((y+R)/cell);
+        for(let b=-cw;b<=cw;b++)for(let a=-cw;a<=cw;a++){ const ii=ci+a, jj=cj+b; if(ii<0||jj<0||ii>=N||jj>=N) continue; tx[jj*N+ii]=ux; ty[jj*N+ii]=uy; }
+      }
+    }
+  }
+  if(map) for(const w of ways.slice(-500)) S.riverLines.push(L.polyline(w.geometry.map(p=>[p.lat,p.lon]),{color:'#1565c0',weight:big(w)?3.5:1.5,opacity:0.8,interactive:false}).addTo(map));
+  S.riverName=near.name;
+  const gt=S.rvelManual?'Fließgeschwindigkeit von Hand vorgegeben.':await loadGauge(near.name);
+  info.textContent=`${ways.length} Gewässerabschnitte im Rechengebiet`+(near.name?`, nächstes benanntes Gewässer: ${near.name} (${dist(near.d)} entfernt)`:'')+'. '+gt;
+  return {N,R,cell,tx,ty,v:Math.max(0,num('rvel',0.5))};
+}
+
 /* Blast-Cast */
 const BLAST_LV=[
   {kpa:2,  col:'#6f8f00', txt:'Fensterbruch möglich, Verletzungen durch Glassplitter'},
@@ -1015,71 +1119,87 @@ async function runBlast(manual,T0){
     status('Lade Wetterdaten …'); await loadWeather(); showWx();
     const W=S.wx; if(T0<W.t[0]||T0>W.t[W.t.length-1]) throw new Error('Für diesen Zeitpunkt liegen keine Wetterdaten vor. Ereignisbeginn anpassen oder Wetter von Hand vorgeben.');
   }
-  const w=wxAt(T0), p0=w.pres*100;
-  let Wt, label, frag=0;
-  if(S.bomb){
-    Wt=num('bneq',0); const auw=Math.max(num('bauw',0),Wt);
+  const w=wxAt(T0), p0=w.pres*100, c0=Math.sqrt(1.4*287*w.Tk), kind=S.bkind, ws=[];
+  const pz=(Wt,l)=>{ const r=blastRadius(Wt,l.kpa*1000,p0); return {name:l.kpa+' kPa',r,col:l.col,fill:true,txt:l.txt+` (Druckwelle nach ${fmt(r/c0,r/c0<1?2:1)} s)`}; };
+  let zones, label, title, hs=1.5, shadeName='Druckschatten';
+  if(kind==='bleve'){
+    const M=num('bvmass',0)*Math.min(100,Math.max(1,num('bvfill',100)))/100;
+    if(!(M>0)) throw new Error('Inhalt des Behälters angeben.');
+    const B=bleve(M,w.T,w.rh), Rf=B.D/2;
+    label='BLEVE '+$('bvessel').selectedOptions[0].textContent; title=`${label}: ${fmt(M,0)} kg, Feuerball ${Math.round(B.D)} m Durchmesser, ${fmt(B.t,1)} s`;
+    hs=B.H; shadeName='Strahlungsschatten';
+    zones=[
+      {name:'Schmerzgrenze',r:B.rFor(125),col:'#c99a00',fill:true,txt:'Wärmestrahlung: Schmerz, Verbrennungen 1. Grades an ungeschützter Haut'},
+      {name:'Verbrennung 2. Grades',r:B.rFor(250),col:'#e06a00',fill:true,txt:'Wärmestrahlung: Verbrennungen 2. Grades an ungeschützter Haut'},
+      {name:'Lebensgefahr',r:B.rFor(1000),col:'#c4001a',fill:true,txt:'Wärmestrahlung: schwerste Verbrennungen, Lebensgefahr ohne Schutz'},
+      {name:'Feuerball',r:Rf,col:'#5a0010',fill:true,txt:`Feuerball: Durchmesser ${Math.round(B.D)} m, Dauer ${fmt(B.t,1)} s, Abstrahlung rund ${Math.round(B.E)} kW/m²`},
+      {name:'Fensterbruch 2 kPa',r:blastRadius(B.Wtnt,2000,p0),col:'#6f8f00',fill:false,dash:true,txt:'Druckwelle 2 kPa: Fensterbruch möglich'},
+      {name:'Einsatzkräfte',r:Math.max(90,4*Rf),col:'#0b5c7a',fill:false,dash:false,txt:'Mindestabstand für Einsatzkräfte in Schutzkleidung: 4 Feuerballradien, mindestens 90 m. Trümmer können auch hier einschlagen.'},
+      {name:'Evakuierung mindestens',r:15*Rf,col:'#333c44',fill:false,dash:true,txt:'Mindestradius für die Evakuierung der Bevölkerung: 15 Feuerballradien (Trümmerflug)'},
+      {name:'Evakuierung empfohlen',r:30*Rf,col:'#333c44',fill:false,dash:true,txt:'Empfohlener Evakuierungsradius: 30 Feuerballradien (weit fliegende Behälterteile)'}];
+    ws.push('Trümmer sind die weitreichendste Gefahr: Behälterteile fliegen bevorzugt in Richtung der Behälterenden, einzelne weiter als der Mindestradius. Nicht in Verlängerung der Längsachse aufstellen.');
+    ws.push('Der Zeitpunkt des Versagens ist nicht vorhersagbar. Bei direkter Beflammung kann ein Behälter binnen Minuten bersten; ein abblasendes Sicherheitsventil schließt einen BLEVE nicht aus.');
+    ws.push('Gerechnet mit Propan. Feuerball und Abstände gelten für den Fall, dass der gesamte Inhalt beteiligt ist; die Druckwelle ist beim BLEVE gegenüber Feuerball und Trümmern nachrangig und nur grob geschätzt.');
+  } else if(kind==='bomb'){
+    const Wt=num('bneq',0), auw=Math.max(num('bauw',0),Wt);
     if(!(Wt>0)) throw new Error('Sprengstoffmasse angeben.');
-    frag=634*Math.pow(auw,1/6); label=$('bbomb').selectedOptions[0].textContent;
+    label=$('bbomb').selectedOptions[0].textContent; title=`Druckwelle: ${label} (${fmt(Wt,0)} kg TNT)`;
+    zones=BLAST_LV.map(l=>pz(Wt,l));
+    zones.push({name:'Splitter',r:634*Math.pow(auw,1/6),col:'#333c44',fill:false,dash:true,txt:'Gefahrenbereich für Splitter nach Faustformel UN IATG 01.80 (ungeschützt, Zutritt der Öffentlichkeit möglich)'});
+    ws.push('Splitter fliegen viel weiter, als die Druckwelle wirkt. Den Evakuierungsradius legt der Kampfmittelräumdienst fest; der gestrichelte Kreis ist die Faustformel der Vereinten Nationen für eine ungeschützte Detonation im Freien.');
+    ws.push('Liegt die Bombe im Erdreich, wird die Druckwelle gedämpft. Dafür kommen Erdauswurf und Erschütterung hinzu.');
   } else {
     const m=num('bmass',0); if(!(m>0)) throw new Error('Gasmenge angeben.');
-    Wt=+$('byield').value*m*(+$('bfuel').value)/4.6;
-    label=fmt(m,0)+' kg '+$('bfuel').selectedOptions[0].textContent;
+    const Wt=+$('byield').value*m*(+$('bfuel').value)/4.6;
+    label=fmt(m,0)+' kg '+$('bfuel').selectedOptions[0].textContent; title=`Druckwelle: ${label} (${fmt(Wt,Wt<10?1:0)} kg TNT)`;
+    zones=BLAST_LV.map(l=>pz(Wt,l));
+    ws.push('Das TNT-Äquivalent-Verfahren ist für Gaswolken grob: Im Nahbereich wird der Druck eher überschätzt, die Verdämmung bestimmt das Ergebnis stark. Im Zweifel die höhere Verdämmung wählen.');
+    ws.push('Feuerball, Wärmestrahlung und Trümmerwurf sind nicht dargestellt.');
   }
-  const c0=Math.sqrt(1.4*287*w.Tk);
-  const zones=BLAST_LV.map(l=>{ const r=blastRadius(Wt,l.kpa*1000,p0); return {...l,r,ta:r/c0}; });
-  const rmax=zones[0].r, R=Math.max(200,Math.ceil(rmax*1.25/100)*100);
+  zones=zones.filter(z=>z.r>0).sort((a,b)=>b.r-a.r);
+  const rFill=Math.max(...zones.filter(z=>z.fill).map(z=>z.r)), rAll=zones[0].r, R=Math.max(200,Math.ceil(rFill*1.25/100)*100);
   let terr=null, img=null, shade=0;
   if($('useTerr').checked){ status('Lade Höhendaten …'); terr=await loadTerrain(R); }
   if(terr){
-    status('Berechne Druckschatten …'); await pause();
-    const sh=blastShadow(terr,1.5,1.5), N=terr.N, K=3, M=(N-1)*K+1, cv=document.createElement('canvas'); cv.width=cv.height=M;
+    status('Berechne Geländeschatten …'); await pause();
+    const sh=blastShadow(terr,hs,1.5), N=terr.N, K=3, M=(N-1)*K+1, cv=document.createElement('canvas'); cv.width=cv.height=M;
     const cx=cv.getContext('2d'), im=cx.createImageData(M,M), D=im.data; let inC=0, shC=0;
-    for(let k=0;k<N*N;k++){ const i=k%N, j=(k-i)/N; if(Math.hypot(-R+i*terr.cell,-R+j*terr.cell)<=rmax){ inC++; if(sh[k]) shC++; } }
+    for(let k=0;k<N*N;k++){ const i=k%N, j=(k-i)/N; if(Math.hypot(-R+i*terr.cell,-R+j*terr.cell)<=rFill){ inC++; if(sh[k]) shC++; } }
     shade=inC?shC/inC:0;
     for(let r=0;r<M;r++)for(let c=0;c<M;c++){
       if((r+c)%7>=3) continue;
       const j=Math.round((M-1-r)/K), i=Math.round(c/K);
-      if(!sh[j*N+i]||Math.hypot(-R+i*terr.cell,-R+j*terr.cell)>rmax) continue;
+      if(!sh[j*N+i]||Math.hypot(-R+i*terr.cell,-R+j*terr.cell)>rFill) continue;
       const o=(r*M+c)*4; D[o]=40; D[o+1]=50; D[o+2]=60; D[o+3]=170;
     }
     cx.putImageData(im,0,0); img=cv.toDataURL('image/png');
   }
-  S.res={blast:true,zones,frag,Wt,label,bomb:!!S.bomb,R,lat:S.src.lat,lon:S.src.lon,T0,terr:!!terr,img,shade,w,layers:[],meta:[],nSlots:0};
-  const ws=[];
-  if(S.bomb){
-    ws.push('Splitter fliegen viel weiter, als die Druckwelle wirkt. Den Evakuierungsradius legt der Kampfmittelräumdienst fest; der gestrichelte Kreis ist die Faustformel der Vereinten Nationen für eine ungeschützte Detonation im Freien.');
-    ws.push('Liegt die Bombe im Erdreich, wird die Druckwelle gedämpft. Dafür kommen Erdauswurf und Erschütterung hinzu.');
-  } else {
-    ws.push('Das TNT-Äquivalent-Verfahren ist für Gaswolken grob: Im Nahbereich wird der Druck eher überschätzt, die Verdämmung bestimmt das Ergebnis stark. Im Zweifel die höhere Verdämmung wählen.');
-    ws.push('Feuerball, Wärmestrahlung und Trümmerwurf sind nicht dargestellt.');
-  }
-  ws.push('Gebäude schirmen ab, in Straßenzügen kann der Druck aber gebündelt und verstärkt werden. Beides ist nicht erfasst.');
-  if(w.cls>=4) ws.push('Stabile Schichtung (Inversion): Die Druckwelle wird zum Boden zurückgelenkt. Fensterbruch kann deutlich weiter reichen als der äußere Kreis.');
-  if(w.u10>=5) ws.push(`Wind aus ${Math.round(w.dir)}° mit ${fmt(w.u10)} m/s: In Windrichtung reicht die Wirkung etwas weiter, gegen den Wind etwas weniger weit.`);
-  if(!terr) ws.push($('useTerr').checked?'Höhendaten nicht abrufbar: ohne Druckschatten des Geländes gerechnet.':'Gelände abgeschaltet: ohne Druckschatten gerechnet.');
+  S.res={blast:true,zones,title,label,shadeName,R,lat:S.src.lat,lon:S.src.lon,T0,terr:!!terr,img,shade,w,layers:[],meta:[],nSlots:0};
+  if(kind!=='bleve') ws.push('Gebäude schirmen ab, in Straßenzügen kann der Druck aber gebündelt und verstärkt werden. Beides ist nicht erfasst.');
+  if(kind!=='bleve'&&w.cls>=4) ws.push('Stabile Schichtung (Inversion): Die Druckwelle wird zum Boden zurückgelenkt. Fensterbruch kann deutlich weiter reichen als der äußere Kreis.');
+  if(kind!=='bleve'&&w.u10>=5) ws.push(`Wind aus ${Math.round(w.dir)}° mit ${fmt(w.u10)} m/s: In Windrichtung reicht die Wirkung etwas weiter, gegen den Wind etwas weniger weit.`);
+  if(kind==='bleve'&&w.u10>=5) ws.push(`Wind aus ${Math.round(w.dir)}° mit ${fmt(w.u10)} m/s: Der Feuerball wird in Windrichtung verdriftet, die Wärmezonen verschieben sich entsprechend.`);
+  if(!terr) ws.push($('useTerr').checked?'Höhendaten nicht abrufbar: ohne Geländeschatten gerechnet.':'Gelände abgeschaltet: ohne Geländeschatten gerechnet.');
   const el=$('warnings'); el.hidden=false; el.innerHTML='<ul>'+ws.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
   buildTable(); $('timeline').hidden=false; $('tablesec').hidden=false; show(0);
-  if(map) map.fitBounds(L.latLng(S.src.lat,S.src.lon).toBounds(2.2*Math.max(rmax,frag)));
-  status(`Fertig: ${label}, entspricht ${fmt(Wt,Wt<10?1:0)} kg TNT.`);
+  if(map) map.fitBounds(L.latLng(S.src.lat,S.src.lon).toBounds(2.2*rAll));
+  status('Fertig: '+title+'.');
 }
 function clearFills(){ (S.fills||[]).forEach(o=>map&&map.removeLayer(o)); S.fills=[]; }
+const zsw=z=>`<span class="sw" style="background:${z.fill?z.col:`repeating-linear-gradient(90deg,${z.col} 0 4px,transparent 4px ${z.dash?7:4}px)`}"></span>`;
 function showBlast(){
   const r=S.res;
   $('tlRow').hidden=true; S.slot=0;
   if(map){
     (S.overlays||[]).forEach(o=>map.removeLayer(o)); S.overlays=[]; clearFills();
-    for(const z of r.zones) S.fills.push(L.circle([r.lat,r.lon],{radius:z.r,color:z.col,weight:1,fillColor:z.col,fillOpacity:0.22,interactive:false}).addTo(map));
+    for(const z of r.zones) if(z.fill) S.fills.push(L.circle([r.lat,r.lon],{radius:z.r,color:z.col,weight:1,fillColor:z.col,fillOpacity:0.22,interactive:false}).addTo(map));
     if(r.img) S.overlays.push(L.imageOverlay(r.img,boundsOf(r),{opacity:1,interactive:false}).addTo(map));
-    const rings=r.zones.map((z,i)=>{ const a=(-70+35*i)*Math.PI/180; return {r:z.r,far:[Math.sin(a),Math.cos(a)],color:z.col,dash:false,text:z.kpa+' kPa · '+dist(z.r)}; });
-    if(r.frag) rings.push({r:r.frag,far:[-0.7,-0.7],color:'#333c44',dash:true,text:'Splitter · '+dist(r.frag)});
-    drawRings(rings);
+    drawRings(r.zones.map((z,i)=>{ const a=(-80+32*i)*Math.PI/180; return {r:z.r,far:[Math.sin(a),Math.cos(a)],color:z.col,dash:!!z.dash,text:z.name+' · '+dist(z.r)}; }));
   }
-  $('slotlabel').textContent=`Druckwelle: ${r.label} (${fmt(r.Wt,r.Wt<10?1:0)} kg TNT)`;
+  $('slotlabel').textContent=r.title;
   let h='<div class="reach">';
-  for(let i=r.zones.length-1;i>=0;i--){ const z=r.zones[i]; h+=`<span class="chip"><span class="sw" style="background:${z.col}"></span>${z.kpa} kPa bis ${dist(z.r)}</span>`; }
-  if(r.frag) h+=`<span class="chip"><span class="sw" style="background:repeating-linear-gradient(90deg,#333c44 0 4px,transparent 4px 7px)"></span>Splitter bis ${dist(r.frag)}</span>`;
-  h+='</div><div class="small">Gelände: '+(r.terr?`berücksichtigt. Schraffiert: Druckschatten hinter Geländeerhebungen (${Math.round(r.shade*100)} % der Fläche). Dort ist die Belastung geringer, Schäden bleiben möglich.`:'nicht berücksichtigt')+'</div>';
+  for(let i=r.zones.length-1;i>=0;i--){ const z=r.zones[i]; h+=`<span class="chip">${zsw(z)}${z.name} bis ${dist(z.r)}</span>`; }
+  h+='</div><div class="small">Gelände: '+(r.terr?`berücksichtigt. Schraffiert: ${r.shadeName} hinter Geländeerhebungen (${Math.round(r.shade*100)} % der Fläche). Dort ist die Belastung geringer, Schäden bleiben möglich.`:'nicht berücksichtigt')+'</div>';
   $('slotinfo').innerHTML=h;
 }
 
@@ -1147,6 +1267,7 @@ function warnings(defs,meta,terr,manual){
   const w=[], veg=defs.some(d=>d.veg);
   if(defs.some(d=>d.all.edge)) w.push((veg?'Die Feuerfront':'Die Gefahrenzone')+' erreicht den Rand des Rechengebiets. Rechengebiet vergrößern.');
   for(const d of defs) if(d.none) w.push(d.label+': Keine Schwelle wird am Boden überschritten. Eine aufsteigende Fahne kann über das Gebiet hinwegziehen und weiter entfernt oder an höher gelegenem Gelände auftreffen.');
+  if(defs.some(d=>d.P&&d.P.river)) w.push(`Fließgewässer einbezogen mit ${fmt(defs.find(d=>d.P&&d.P.river).P.river.v,2)} m/s: Die Lenkung entlang des Gewässers ist eine grobe Näherung. Tiefliegende Uferbereiche, Brücken, Schleusen und Ortslagen am Wasser gesondert betrachten.`);
   if(defs.some(d=>d.dense)) w.push('Schwergas: Die Wolke breitet sich in Bodennähe flach aus und sammelt sich in Senken, Kellern und Tälern. Nahbereich und Tieflagen sind im Modell unterschätzt.');
   if(veg){
     w.push('Die Vegetation gilt überall als gleich und brennbar. Straßen, Gewässer, Äcker und Ortschaften als Brandriegel selbst in der Karte berücksichtigen.');
@@ -1209,9 +1330,8 @@ function buildTable(){
   const r=S.res;
   $('tblTitle').textContent=r.blast?'Wirkungszonen':'Zeittabelle'; $('tblNote').hidden=!!r.blast;
   if(r.blast){
-    $('thead').innerHTML='<tr><th>Überdruck</th><th>bis</th><th>nach</th><th style="text-align:left">Wirkung</th></tr>';
-    $('tbody').innerHTML=[...r.zones].reverse().map(z=>`<tr><td><span class="sw" style="background:${z.col}"></span> ${z.kpa} kPa</td><td>${dist(z.r)}</td><td>${fmt(z.ta,z.ta<1?2:1)} s</td><td style="text-align:left;white-space:normal;min-width:180px">${z.txt}</td></tr>`).join('')
-      +(r.frag?`<tr><td>Splitter</td><td>${dist(r.frag)}</td><td></td><td style="text-align:left;white-space:normal">Gefahrenbereich für Splitter nach Faustformel UN IATG 01.80 (ungeschützt, Zutritt der Öffentlichkeit möglich)</td></tr>`:'');
+    $('thead').innerHTML='<tr><th>Zone</th><th>bis</th><th style="text-align:left">Wirkung</th></tr>';
+    $('tbody').innerHTML=[...r.zones].reverse().map(z=>`<tr><td>${zsw(z)} ${z.name}</td><td>${dist(z.r)}</td><td style="text-align:left;white-space:normal;min-width:200px">${z.txt}</td></tr>`).join('');
     return;
   }
   $('thead').innerHTML='<tr><th>Zeitfenster</th><th>Wind</th><th>Kl.</th>'+r.layers.flatMap(d=>d.heads).map(x=>'<th>'+x+'</th>').join('')+'</tr>';
