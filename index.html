@@ -72,6 +72,10 @@ header{flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:8px;paddin
 .tabs{display:flex;gap:4px}
 .tabs button{flex:1;border:0;border-top:3px solid transparent;border-radius:6px 6px 0 0;padding:8px 6px;font-size:13.5px;line-height:1.2;font-weight:600;background:rgba(255,255,255,.16);color:var(--accent-ink)}
 .tabs button.blast{background:#e06a00;color:#fff}
+.tabs button.veg{background:#c4001a;color:#fff}
+.tabs button.veg[aria-selected=true]{background:var(--bg);color:#c4001a;border-top-color:#c4001a}
+body[data-tab=veg] button.primary{background:#c4001a;border-color:#c4001a;color:#fff}
+#disclaimer{margin:-8px calc(-16px - env(safe-area-inset-right)) 0 calc(-16px - env(safe-area-inset-left));padding:7px 16px;background:#ffd400;color:#1a1a1a;font-weight:800;font-size:clamp(11.5px,3.1vw,15px);line-height:1.25;text-align:center;text-wrap:balance;border-top:2px solid #1a1a1a;border-bottom:2px solid #1a1a1a}
 .tabs button[aria-selected=true]{background:var(--bg);color:var(--ink);border-top-color:var(--accent-ink)}
 .tabs button.blast[aria-selected=true]{background:var(--bg);color:#e06a00;border-top-color:#e06a00}
 body[data-tab=blast] button.primary{background:#e06a00;border-color:#e06a00;color:#fff}
@@ -108,9 +112,10 @@ tbody tr.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
 <header><h1>Ausbreitungsprognose</h1>
 <nav class="tabs" role="tablist" aria-label="Prognoseart">
   <button id="tabCloud" role="tab" aria-selected="true">Gefahrstoff und Rauch</button>
-  <button id="tabVeg" role="tab" aria-selected="false">Vegetations&shy;brand</button>
+  <button id="tabVeg" role="tab" aria-selected="false" class="veg">Vegetations&shy;brand</button>
   <button id="tabBlast" role="tab" aria-selected="false" class="blast">Blast-Cast</button>
-</nav></header>
+</nav>
+<div id="disclaimer" role="note">Prognose! Werte sind durch geeignete Messungen vor Ort zu überprüfen!</div></header>
 
 <div id="mapwrap"><div id="map"></div><div id="hint">Karte antippen: Freisetzungsort setzen</div></div>
 
