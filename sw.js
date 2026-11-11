@@ -1,6 +1,6 @@
 // Programmdateien werden zwischengespeichert, damit die App auch bei schlechtem Netz startet.
 // Wetter, Hoehen und Kartenkacheln kommen immer frisch aus dem Netz.
-const CACHE = 'ausbreitung-v11';
+const CACHE = 'ausbreitung-v12';
 const SHELL = ['./', 'index.html', 'js/modell-ausbreitung.js', 'js/modell-schwergas.js', 'js/modell-vegetationsbrand.js', 'js/modell-explosion.js', 'js/stoffdaten.js', 'js/app-grundlagen.js', 'js/app-karte.js', 'js/app-eingabe.js', 'js/app-wetter.js', 'js/app-gelaende.js', 'js/app-rechnung.js', 'js/app-anzeige.js', 'js/app-qualitaet.js', 'js/app-bericht.js', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',

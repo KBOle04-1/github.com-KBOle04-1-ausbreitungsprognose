@@ -175,7 +175,7 @@ Jack Rabbit II, Chlorversuche 6, 7 und 9 (8 bis 18 t in 33 bis 133 s). Vergliche
 | Teil | Verhältnis Modell / Messbogen | Bewertung |
 |---|---|---|
 | innerhalb der Kurven (berechnet), 6 Werte | 0,64 bis 1,60 | innerhalb des Faktors 2 |
-| unterhalb der Kurven (abgeleitet), 6 Werte | 0,39 bis 0,77 | drei Werte außerhalb des Faktors 2, alle zu kurz |
+| unterhalb der Kurven (abgeleitet), 6 Werte | 0,39 bis 0,66 | drei Werte außerhalb des Faktors 2, alle zu kurz |
 
 Einordnung:
 
