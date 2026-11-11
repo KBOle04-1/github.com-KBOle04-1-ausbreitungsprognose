@@ -253,3 +253,20 @@ Nachrechnung zu F-01 nach der Korrektur, Chlor 0,5 kg/s, Reichweite AEGL-1 / AEG
 Die Reichweite hängt nicht mehr von der Gebietsgröße ab. Die Abweichung zur analytischen Lösung liegt zwischen −5 % und +16 %; die größte tritt bei starkem Wind auf, weil die Puffs dann weiter auseinander liegen.
 
 Alle übrigen Befunde sind offen. Die kritischen und hohen Befunde F-02 (Schwergas), F-03 und F-04 (AEGL), F-05 (Quellterm), F-07 (Punktwind), F-15 und F-16 (Brandrauch), F-23 und F-24 (Vegetationsbrand), F-28 (Gasexplosion) und F-36 (Wetterszenarien) bestehen fort und stehen in der Einstufung jeder betroffenen Prognose.
+
+### Schwergasmodul und Struktur vom 11.11.2026 (Modellstand 0.11)
+
+| Befund | Maßnahme | Stand |
+|---|---|---|
+| F-02 Schwergas | Verfahren nach Britter und McQuaid als eigenes Modul (`js/modell-schwergas.js`) mit automatischer Modellwahl über das Schwergaskriterium. Ausgegeben werden Entfernungen, getrennt von den Flächen des Gauß-Modells. Zustand beim Austritt wählbar (gasförmig, kalter Dampf, druckverflüssigt). Beschreibung: `docs/Britter-McQuaid.md`. | teilweise behoben |
+| F-02 Rest | Für giftige Gase liegen die Schwellen meist unter dem Kurvenbereich; die Entfernung ist dann nur abgeleitet und im Vergleich mit Jack Rabbit II um bis zum Faktor 2,6 zu kurz. Ein dynamisches Schwergasmodell fehlt weiter. Breite und Verweilen der Wolke werden nicht gerechnet. | offen |
+| F-05 Quellterm | Anfangsdichte aus Zustand und Siedetemperatur; Entspannungsverdampfung wird ausgewiesen. Impuls, Ausregnen und Lachenverdampfung fehlen. | teilweise |
+| F-41 Struktur | Rechenmodelle, Stoffdaten und Oberfläche in getrennten Dateien; Modelle ohne Browser prüfbar; Prüflauf mit 49 Fällen; Konstantenregister mit Herkunft und Status. Beschreibung: `docs/Architektur.md`, `docs/Konstanten.md`, `docs/Validierung.md`. | weitgehend behoben |
+
+Neu festgestellt:
+
+| Nr. | Befund | Stufe |
+|---|---|---|
+| F-42 | Die Kurventabellen von Britter-McQuaid sind nur zum Teil an einer abgerufenen Quelle abgeglichen; zwei Vorzeichen wurden anhand der Stetigkeit korrigiert, das Workbook selbst lag nicht vor. | hoch, bis zum Abgleich |
+| F-43 | Die Siede- und Verdampfungsdaten der fünf Stoffe mit Zweiphasen-Option sind nicht an einer Primärquelle abgeglichen. | mittel |
+| F-44 | Der Prüflauf weist drei nicht bestandene Vergleiche mit Jack Rabbit II aus (abgeleitete Entfernungen zu kurz). | hoch |

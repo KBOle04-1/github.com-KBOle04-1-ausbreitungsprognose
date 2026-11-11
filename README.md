@@ -19,9 +19,38 @@ App öffnen: https://kbole04-1.github.io/github.com-KBOle04-1-ausbreitungsprogno
 Die App wird seit dem 11.11.2026 fachlich überarbeitet. Der [Prüfbericht](docs/Pruefbericht.md) listet alle bekannten Mängel mit Fundstelle im Quellcode und den Stand ihrer Behebung. Wichtig für die Nutzung:
 
 - Kein Teilmodell ist bisher gegen Versuchsdaten oder Referenzprogramme validiert.
-- Schwere Gase werden noch wie neutrale Gase gerechnet. Ergebnisse für Chlor, Propan und ähnliche Stoffe nicht für Absperrgrenzen verwenden.
+- Für schwere Gase gibt es eine Entfernungsschätzung nach Britter und McQuaid (siehe unten). Für giftige Gase liegt sie meist außerhalb des abgesicherten Bereichs des Verfahrens; solche Werte nicht als Absperrgrenze verwenden.
 - AEGL-Werte werden noch ohne Zeitmittel und Dosis bewertet und sind noch nicht gegen die amtliche Liste geprüft.
 - Brandrauch ist nur eine Richtungsanzeige: gerechnet wird Ruß, das Ergebnis hängt stark von der unsicheren Überhöhung ab. „Nicht erreicht" ist keine Entwarnung.
+
+### Unterlagen
+
+| Datei | Inhalt |
+|---|---|
+| [docs/Pruefbericht.md](docs/Pruefbericht.md) | Mängelliste mit Fundstellen und Umsetzungsstand |
+| [docs/Britter-McQuaid.md](docs/Britter-McQuaid.md) | Schwergasmodul: Gleichungen, Kurven, Grenzen, Herkunft der Zahlen |
+| [docs/Validierung.md](docs/Validierung.md) | Stand der Validierung, nicht bestandene Fälle, offene Vergleiche |
+| [docs/Validierung-Ergebnisse.md](docs/Validierung-Ergebnisse.md) | Ergebnisse des automatischen Prüflaufs |
+| [docs/Konstanten.md](docs/Konstanten.md) | alle Rechenwerte mit Einheit, Herkunft und Prüfstand |
+| [docs/Architektur.md](docs/Architektur.md) | Aufbau des Programms, Prüflauf, Veröffentlichung |
+
+### Schwere Gase
+
+Die App wählt das Modell selbst und nennt die Entscheidung unter „Modellwahl":
+
+- Ist die Wolke nicht schwerer als Luft oder verhält sie sich bei dem herrschenden Wind passiv, rechnet das Gauß-Modell.
+- Ist das Schwergaskriterium erfüllt, wird zusätzlich die Entfernung in Windrichtung nach Britter und McQuaid bestimmt und als gestrichelter Kreis mit der Beschriftung „Schwergas" gezeigt. Das ist eine stationäre Schätzung für ebenes, hindernisarmes Gelände; sie hat keinen Zeitverlauf und keine Wolkenform.
+- Die farbigen Flächen und die Zeitfenster stammen weiter aus dem Gauß-Modell und sind als „abgeleitet" beschriftet. Für schwere Gase sind sie zu schmal.
+
+Jede Schwergas-Entfernung trägt eine von drei Kennzeichnungen:
+
+| Kennzeichnung | Bedeutung |
+|---|---|
+| berechnet | liegt innerhalb der Kurven des Verfahrens; Unsicherheit etwa Faktor 2 |
+| abgeleitet | Schwelle liegt unter dem Kurvenbereich; Fortsetzung mit dem Gauß-Modell. Ausgabe als „mindestens", bis zum 2,5-Fachen möglich |
+| Nahbereich, nicht berechenbar | Schwelle liegt über dem Kurvenbereich |
+
+Neu ist die Auswahl „Zustand beim Austritt": gasförmig, druckverflüssigt aus der Flüssigphase oder kalter Dampf bei Siedetemperatur. Ammoniak und Erdgas sind nur im kalten Zustand schwerer als Luft; mit der richtigen Wahl werden sie jetzt als Schwergas erkannt. Die Auswahl steht nur für Stoffe mit hinterlegten Siededaten zur Verfügung (Chlor, Ammoniak, Schwefeldioxid, Propan, Methan).
 
 ### Prognosequalität
 
