@@ -14,6 +14,28 @@ Karte, Ortssuche und Berechnung sind auf Deutschland begrenzt.
 
 App öffnen: https://kbole04-1.github.io/github.com-KBOle04-1-ausbreitungsprognose/
 
+## Stand der fachlichen Überarbeitung
+
+Die App wird seit dem 11.11.2026 fachlich überarbeitet. Der [Prüfbericht](docs/Pruefbericht.md) listet alle bekannten Mängel mit Fundstelle im Quellcode und den Stand ihrer Behebung. Wichtig für die Nutzung:
+
+- Kein Teilmodell ist bisher gegen Versuchsdaten oder Referenzprogramme validiert.
+- Schwere Gase werden noch wie neutrale Gase gerechnet. Ergebnisse für Chlor, Propan und ähnliche Stoffe nicht für Absperrgrenzen verwenden.
+- AEGL-Werte werden noch ohne Zeitmittel und Dosis bewertet und sind noch nicht gegen die amtliche Liste geprüft.
+- Brandrauch ist nur eine Richtungsanzeige: gerechnet wird Ruß, das Ergebnis hängt stark von der unsicheren Überhöhung ab. „Nicht erreicht" ist keine Entwarnung.
+
+### Prognosequalität
+
+Jedes Ergebnis trägt unter den Reichweiten eine aufklappbare Einstufung mit Begründung, die auch im PDF steht:
+
+| Einstufung | Bedeutung |
+|---|---|
+| Vereinfachtes Modell | Anerkanntes Schätzverfahren innerhalb seines Anwendungsbereichs |
+| Eingeschränktes Modell | Wesentliche Wirkung fehlt oder beruht auf Faustformeln (z. B. Schwergas, Brandrauch, Vegetationsbrand, Gasexplosion) |
+| Unzureichende Datenlage | Eingangsdaten widersprechen sich, z. B. Wettermodelle uneinig über die Windrichtung |
+| Außerhalb des gültigen Modellbereichs | z. B. Wind unter 1 m/s oder Reichweite über 10 km |
+
+Die Stufe „validiertes Modell" wird derzeit nicht vergeben. Entfernungen und Flächen werden gerundet ausgegeben („bis ca. 1,9 km"), weil das Modell keine höhere Genauigkeit hergibt.
+
 ## Auf dem iPhone einrichten
 
 1. Adresse oben in Safari öffnen.
@@ -43,13 +65,15 @@ Die **Zeittabelle** listet für jedes Zeitfenster Wind, Schichtung und Reichweit
 
 #### Fließgewässer und schwere Gase
 
-Mit dem Häkchen „Fließgewässer einbeziehen" (Gefahrstoff und Kombiniert) werden Flüsse, Kanäle und bei kleinem Rechengebiet auch Bäche aus OpenStreetMap geladen und blau in die Karte gezeichnet.
+Mit dem Häkchen „Fließgewässer und Pegel anzeigen" (Gefahrstoff und Kombiniert) werden Flüsse, Kanäle und bei kleinem Rechengebiet auch Bäche aus OpenStreetMap geladen und blau in die Karte gezeichnet. In Hessen wird dazu der Abfluss am nächsten HLNUG-Pegel angezeigt. Auf die Rechnung hat das zunächst keine Wirkung.
 
-- **Schwere Gase** (z. B. Chlor, Propan, Schwefeldioxid) bleiben am Boden. Über dem Gewässer werden sie entlang des Laufs gelenkt und treiben zusätzlich mit der Strömung. Je schwächer der Wind, desto stärker die Lenkung; mit zunehmender Verdünnung lässt sie nach.
-- **Leichte Gase** werden nur bei stabiler Schichtung und deutlich schwächer gelenkt.
-- Bei kräftigem Wind quer zum Gewässer zieht die Wolke darüber hinweg; das Gewässer ändert dann wenig.
-- **Fließgeschwindigkeit:** In Hessen wird der Abfluss am nächsten Pegel des HLNUG abgerufen (bevorzugt am selben Gewässer, sonst der nächstgelegene im Umkreis von 15 km) und daraus die Geschwindigkeit geschätzt (v ≈ 0,35 · Q^0,25, etwa ± 50 %). Der Wert steht im Feld und lässt sich überschreiben, z. B. mit einer eigenen Messung (Treibgut über eine bekannte Strecke stoppen). Außerhalb Hessens von Hand eintragen.
-- Die Lenkung ist eine grobe Näherung. Tiefliegende Uferbereiche, Brücken, Schleusen und Ortslagen am Wasser gesondert betrachten. Im Wasser gelöste oder aufschwimmende Stoffe werden nicht gerechnet.
+Die Lenkung der Wolke entlang des Gewässers ist seit dem 11.11.2026 **ausgeschaltet** und nur über das Häkchen „Wolke entlang des Gewässers lenken (experimentell, nicht belegt)" wählbar. Gründe:
+
+- Für die Lenkung einer Gaswolke durch ein Gewässer und für die Kopplung an die Wassergeschwindigkeit gibt es keinen Literaturbeleg; die Faktoren sind selbst gewählt.
+- Die Fließrichtung stammt ungeprüft aus der Zeichenrichtung in OpenStreetMap.
+- Die Fließgeschwindigkeit wird aus dem Abfluss mit einer eigenen Näherung geschätzt (v ≈ 0,35 · Q^0,25); Abweichungen um den Faktor 2 sind möglich.
+
+Wer die Lenkung einschaltet, erhält eine als „eingeschränkt" gekennzeichnete Prognose. Im Wasser gelöste oder aufschwimmende Stoffe werden nicht gerechnet.
 
 ### Brandrauch
 
@@ -110,9 +134,10 @@ Für Behälter mit druckverflüssigtem Gas (Propan, Butan), die im Feuer versage
 | Lebensgefahr | Wärmestrahlung: schwerste Verbrennungen ohne Schutz (Wärmedosis 1000) |
 | Verbrennung 2. Grades | an ungeschützter Haut (Wärmedosis 250) |
 | Schmerzgrenze | Schmerz, Verbrennungen 1. Grades (Wärmedosis 125) |
-| Fensterbruch 2 kPa | Druckwelle, grob geschätzt |
-| Einsatzkräfte | Mindestabstand in Schutzkleidung: 4 Feuerballradien, mindestens 90 m |
-| Evakuierung mindestens / empfohlen | 15 bzw. 30 Feuerballradien wegen Trümmerflug |
+| Richtwert Einsatzkräfte | 4 Feuerballradien, mindestens 90 m, in Schutzkleidung |
+| Richtwert Evakuierung / erweitert | 15 bzw. 30 Feuerballradien wegen Trümmerflug |
+
+Die drei Richtwerte stammen von Transport Canada für Flüssiggasbehälter. Sie sind keine allgemeinen Sicherheitsabstände. Die Druckwirkung des BLEVE wird nicht bemessen, weil dafür noch kein belegtes Verfahren hinterlegt ist.
 
 - Die Wärmedosis berücksichtigt die Dauer des Feuerballs und die Dämpfung durch die Luftfeuchte (aus den Wetterdaten).
 - Die Abstände für Einsatzkräfte und Evakuierung folgen der Empfehlung von Transport Canada („BLEVE – Response and Prevention").
@@ -164,18 +189,19 @@ Der Umkreis zeigt die größte Entfernung in irgendeine Richtung. Betroffen ist 
 ## Rechengebiet und Prognosedauer
 
 - Rechengebiet von ± 1 km bis ± 50 km, Prognosedauer von 1 bis 12 Stunden.
-- Je größer das Gebiet, desto gröber die Auflösung: bis ± 10 km 1/120 der Gebietsbreite (bei ± 5 km rund 80 m), bei ± 20 km 200 m, bei ± 50 km rund 400 m. Den Nahbereich getrennt mit kleinem Gebiet rechnen.
+- Reichweiten werden unabhängig vom Raster entlang der Fahnenachse bestimmt. Für die Flächen liegen zwei Raster ineinander: das ganze Rechengebiet und ein achtfach feineres um den Ereignisort. Damit gehen die inneren Zonen auch bei großem Rechengebiet nicht mehr verloren.
 - Das Wetter wird am Freisetzungsort abgegriffen und gilt für das ganze Gebiet. Über 10 km Entfernung sind die Ergebnisse grobe Schätzungen: Der Wind kann dort anders wehen, und die Ausbreitungsformeln sind für solche Entfernungen nur eingeschränkt belegt.
 - Vegetationsbrand rechnet immer mit 1/240 der Gebietsbreite (bei ± 2 km rund 17 m).
 
 ## Topographie
 
-Das Gelände geht in die Rechnung ein, als vereinfachte Korrektur und nicht als Strömungssimulation:
+Das Gelände geht so in die Rechnung ein:
 
-- **Umlenkung:** Hänge lenken den Wind um, bei stabiler Schichtung stark, bei labiler kaum.
-- **Kaltluftabfluss:** Bei stabiler Schichtung und schwachem Wind fließt die Luft hangabwärts.
-- **Schwergas:** Schwere Gase wie Chlor fließen zusätzlich hangabwärts.
-- **Auftreffen:** Eine aufgestiegene Fahne trifft auf höher gelegenes Gelände.
+- **Auftreffen:** Eine aufgestiegene Fahne trifft auf höher gelegenes Gelände (Halbhöhen-Korrektur bei neutraler und labiler Schichtung, volle Geländehöhe bei stabiler).
+- **Vegetationsbrand:** Feuer läuft bergauf schneller, bergab langsamer.
+- **Blast-Cast:** Erhebungen werfen einen Druck- oder Strahlungsschatten.
+
+Die Umlenkung des Windes an Hängen, der Kaltluftabfluss und das Abfließen schwerer Gase hangabwärts waren eigene Näherungen ohne Literaturbeleg. Sie sind seit dem 11.11.2026 **ausgeschaltet** und nur über das Häkchen „Windlenkung durch das Gelände (experimentell, nicht belegt)" wählbar.
 
 Unter jedem Ergebnis steht „Gelände: berücksichtigt" oder „nicht berücksichtigt". Mit dem Häkchen „Gelände (Topographie) berücksichtigen" lässt es sich abschalten, um den Unterschied zu vergleichen. Unter „Freisetzungsort" stehen nach der Rechnung die Höhe des Ortes und die Höhenspanne im Rechengebiet.
 

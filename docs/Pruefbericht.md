@@ -223,3 +223,33 @@ Reihenfolge nach Auswirkung auf die Einsatzentscheidung:
 7. **Validierungskatalog, technische Dokumentation, Einsatzleitungsausgabe.**
 
 Jedes Paket endet mit Tests und einem Eintrag in der Dokumentation. Der Umfang übersteigt eine einzelne Sitzung deutlich.
+
+## 8. Umsetzungsstand
+
+### Sofortkorrekturen vom 11.11.2026 (Modellstand 0.10)
+
+| Befund | Maßnahme | Stand |
+|---|---|---|
+| F-01 Rasterabhängigkeit | Reichweiten werden unabhängig vom Raster unter den Puffmittelpunkten bestimmt (`axisReach`), ohne Mindestbreite, mit logarithmischer Einpassung zwischen zwei Puffs. Flächen auf zwei ineinander liegenden Rastern (ganzes Gebiet und achtfach feiner um den Ereignisort). | behoben |
+| F-13 Randprüfung | kleinste statt erste Schwelle | behoben |
+| F-14 Scheinwert „eine Zelle" | entfällt | behoben |
+| F-39 Scheingenauigkeit | Entfernungen gerundet auf 10 m, 50 m, 0,1 km bzw. 1 km; Flächen auf ein bis zwei Stellen; Ausgabe mit „ca." | behoben |
+| F-06 Geländewind | ausgeschaltet; nur auf ausdrückliche Wahl, dann Einstufung „eingeschränkt" | entschärft |
+| F-19, F-20 Gewässerlenkung, Fließgeschwindigkeit | Gewässer und Pegel werden nur noch angezeigt; Lenkung nur auf ausdrückliche Wahl, dann „eingeschränkt" | entschärft |
+| F-18 Fließrichtung | Hinweis in Oberfläche und Einstufung; Prüfung über Höhendaten steht aus | offen |
+| F-31 BLEVE-Druck | entfernt; Hinweis „Druckwirkung nicht bemessen" | entfernt |
+| F-33 BLEVE-Abstände | als „Richtwert" mit Quelle beschriftet | behoben |
+| F-40 Prognosequalität | Einstufung mit Begründung, Rechenmodell, Modellstand und Berechnungszeit in Anzeige und PDF | behoben, wird mit jedem Paket fortgeschrieben |
+
+Nachrechnung zu F-01 nach der Korrektur, Chlor 0,5 kg/s, Reichweite AEGL-1 / AEGL-2 / AEGL-3 in Metern:
+
+| Fall | analytisch | neu, ± 10 km | neu, ± 50 km |
+|---|---|---|---|
+| Klasse D, 3 m/s | 5187 / 2011 / 499 | 5130 / 1974 / 477 | 5130 / 1974 / 477 |
+| Klasse F, 1,5 m/s | 125 km / 16,2 km / 2264 | — | Rand / 15,7 km / 2163 |
+| Klasse D, 10 m/s (± 20 km) | 2265 / 948 / 255 | 2231 / 988 / 295 | — |
+| Klasse A, 2 m/s (± 5 km) | 1128 / 556 / 174 | 1122 / 552 / 170 | — |
+
+Die Reichweite hängt nicht mehr von der Gebietsgröße ab. Die Abweichung zur analytischen Lösung liegt zwischen −5 % und +16 %; die größte tritt bei starkem Wind auf, weil die Puffs dann weiter auseinander liegen.
+
+Alle übrigen Befunde sind offen. Die kritischen und hohen Befunde F-02 (Schwergas), F-03 und F-04 (AEGL), F-05 (Quellterm), F-07 (Punktwind), F-15 und F-16 (Brandrauch), F-23 und F-24 (Vegetationsbrand), F-28 (Gasexplosion) und F-36 (Wetterszenarien) bestehen fort und stehen in der Einstufung jeder betroffenen Prognose.
