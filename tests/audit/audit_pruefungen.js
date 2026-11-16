@@ -2,7 +2,7 @@
 // Aufruf: node tests/audit/audit_pruefungen.js   -> schreibt docs/TECHNISCHER_CODE_AUDIT_Anhang.md
 const fs=require('fs'), path=require('path'), vm=require('vm');
 const root=path.join(__dirname,'..','..'), ctx=vm.createContext({console,Math});
-for(const f of ['modell-ausbreitung.js','modell-schwergas.js','modell-vegetationsbrand.js','modell-explosion.js'])
+for(const f of ['modell-ausbreitung.js','modell-schwergas.js','modell-vegetationsbrand.js','modell-explosion.js','stoffdaten.js'])
   vm.runInContext(fs.readFileSync(path.join(root,'js',f),'utf8'),ctx,{filename:f});
 const m=new Proxy({},{get:(_,k)=>vm.runInContext(String(k),ctx)});
 const f3=v=>typeof v==='number'?(Number.isFinite(v)?Number(v.toPrecision(3)).toLocaleString('de-DE'):String(v)):String(v);
@@ -118,7 +118,7 @@ np(I(),'Gauß','Feldversuch passiv (z. B. Prairie Grass)','Versuchsdaten','Daten
 np(I(),'Schwergas','Vergleich mit DEGADIS','DEGADIS','Programm nicht ausführbar');
 np(I(),'Schwergas','Vergleich mit SLAB','SLAB','Programm nicht ausführbar');
 np(I(),'Schwergas','Originalnomogramme Britter-McQuaid','Workbook 1988','Primärquelle lag nicht vor');
-np(I(),'Toxikologie','AEGL-Werte gegen amtliche Liste','US-Umweltbehörde','Abgleich noch nicht durchgeführt');
+np(I(),'Toxikologie','AEGL-Bewertung mit Zeitbezug (10 Minuten bis 8 Stunden, Zeitmittel, Dosis)','US-Umweltbehörde','im Programm nicht umgesetzt, daher kein Vergleich möglich; Datenabgleich der 60-Minuten-Werte siehe T01 bis T11');
 np(I(),'Brandrauch','Rauchkonzentration am Boden','Versuchsdaten','keine Referenz; Emissionsdaten nicht belegt');
 np(I(),'Brandrauch','Brandüberhöhung großer Flächenbrände','Versuchsdaten','keine Referenz beschafft');
 np(I(),'Vegetationsbrand','Ausbreitungsgeschwindigkeit gegen Rothermel','Rothermel','Rothermel nicht umgesetzt, keine Vergleichsrechnung');
@@ -130,13 +130,34 @@ np(I(),'Gewässer','Fließgeschwindigkeit gegen Messung','HLNUG','keine Geschwin
 const n=lg.length, mg=Math.exp(lg.reduce((a,b)=>a+b,0)/n), vg=Math.exp(lg.reduce((a,b)=>a+b*b,0)/n), fac2=lg.filter(v=>Math.abs(v)<=Math.log(2)).length/n;
 const stat=`Jack Rabbit II, 12 Wertepaare (Entfernung Modell zu Messbogen): geometrisches Mittel ${f3(mg)}, geometrische Varianz ${f3(vg)}, Anteil innerhalb Faktor 2: ${f3(fac2*100)} %, mittlere quadratische Abweichung im Logarithmus ${f3(Math.sqrt(lg.reduce((a,b)=>a+b*b,0)/n))}.`;
 
+// --- Nachtrag 16.11.2026: Abgleich der hinterlegten AEGL-Werte mit den Ergebnisseiten des AEGL-Programms der US-Umweltbehörde ---
+// Werte in ppm für 10 min, 30 min, 60 min, 4 h, 8 h; abgerufen am 16.11.2026 (Quellen im Bericht). null = „nicht empfohlen".
+const EPA={
+  cl2:  {n:'Chlor',              a1:[0.50,0.50,0.50,0.50,0.50], a2:[2.8,2.8,2.0,1.0,0.71],       a3:[50,28,20,10,7.1]},
+  nh3:  {n:'Ammoniak',           a1:[30,30,30,30,30],           a2:[220,220,160,110,110],        a3:[2700,1600,1100,550,390]},
+  so2:  {n:'Schwefeldioxid',     a1:[0.20,0.20,0.20,0.20,0.20], a2:[0.75,0.75,0.75,0.75,0.75],   a3:[30,30,30,19,9.6]},
+  h2s:  {n:'Schwefelwasserstoff',a1:[0.75,0.60,0.51,0.36,0.33], a2:[41,32,27,20,17],             a3:[76,59,50,37,31]},
+  hcl:  {n:'Chlorwasserstoff',   a1:[1.8,1.8,1.8,1.8,1.8],      a2:[100,43,22,11,11],            a3:[620,210,100,26,26]},
+  hf:   {n:'Fluorwasserstoff',   a1:[1.0,1.0,1.0,1.0,1.0],      a2:[95,34,24,12,12],             a3:[170,62,44,22,22]},
+  hcn:  {n:'Cyanwasserstoff',    a1:[2.5,2.5,2.0,1.3,1.0],      a2:[17,10,7.1,3.5,2.5],          a3:[27,21,15,8.6,6.6]},
+  co:   {n:'Kohlenmonoxid',      a1:null,                       a2:[420,150,83,33,27],           a3:[1700,600,330,150,130]},
+  cocl2:{n:'Phosgen',            a1:null,                       a2:[0.60,0.60,0.30,0.080,0.040], a3:[3.6,1.5,0.75,0.20,0.090]}};
+const SUB=vm.runInContext('SUBST',ctx); let tn=1; const TI=()=>'T'+String(tn++).padStart(2,'0'); const AEGLT=[];
+for(const sb of SUB.filter(x=>x.kind==='aegl')){
+  const e=EPA[sb.id];
+  if(!e){ np(TI(),'Toxikologie',`${sb.name}: hinterlegte AEGL-Werte für 60 Minuten`,'Ergebnisseite der US-Umweltbehörde','Seite am 16.11.2026 nicht abrufbar'); continue; }
+  const ref=[e.a1?e.a1[2]:null,e.a2[2],e.a3[2]], hit=ref.filter((v,i)=>v===sb.lv[i]).length;
+  val(TI(),'Toxikologie',`${sb.name}: hinterlegte AEGL-1/2/3 für 60 Minuten (${sb.lv.map(v=>v==null?'kein Wert':v).join(' / ')})`,`US-Umweltbehörde: ${ref.map(v=>v==null?'nicht empfohlen':v).join(' / ')}`,hit,3,1,1,'Treffer von 3','');
+  AEGLT.push(`| ${e.n} | ${e.a3.join(' / ')} | ${f3(e.a3[0]/e.a3[2])} | ${f3(e.a3[2]/e.a3[4])} | ${e.a2.join(' / ')} | ${f3(e.a2[0]/e.a2[2])} | ${f3(e.a2[2]/e.a2[4])} |`);
+}
 let md='# Technischer Code-Audit: Anhang mit Prüfläufen\n\nErzeugt von `node tests/audit/audit_pruefungen.js` am geprüften Stand. Nicht von Hand ändern.\n\n'
  +'## A. Funktionstests (mathematisch)\n\nJe Funktion ein Normalfall, ein Grenzfall und ein Extremfall. Die Erwartung wurde vor dem Lauf festgelegt.\n\n| Funktion | Art | Fall | Erwartung | Ergebnis | Bewertung |\n|---|---|---|---|---|---|\n'+T.join('\n')
  +`\n\n${T.length} Fälle, davon ${T.filter(x=>x.includes('nicht bestanden')).length} nicht bestanden.\n\n`
  +'## B. Numerische Kontrollrechnungen\n\n| Prüfung | Ergebnis |\n|---|---|\n'+NUM.join('\n')
  +'\n\n## C. Validierungsszenarien (physikalisch)\n\nBewertungsmaßstab, vor der Auswertung festgelegt: analytische Lösung ± 15 % (Konzentration) bzw. ± 20 % (Reichweite); Lehrbuchbeispiel ± 5 %; Versuchsdaten Faktor 2; Ausgleichsgerade Faktor 4 (veröffentlichte Streuung); Richtwerte ± 10 %.\n\n'
  +'| Nr. | Bereich | Szenario | Referenz | Ergebnis | Referenzwert | Einheit | Abweichung absolut | relativ | zulässiges Verhältnis | Bewertung | Ursache / Anmerkung |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n'+VAL.join('\n')
- +`\n\n${VAL.length} Szenarien: ${nB} bestanden, ${nN} nicht bestanden, ${nP} nicht prüfbar.\n\n${stat}\n`;
+ +`\n\n${VAL.length} Szenarien: ${nB} bestanden, ${nN} nicht bestanden, ${nP} nicht prüfbar.\n\n${stat}\n`
+ +'\n## D. Zeitabhängigkeit der AEGL-Werte (Nachtrag 16.11.2026)\n\nWerte der US-Umweltbehörde in ppm für 10 min / 30 min / 60 min / 4 h / 8 h. Das Programm verwendet nur die 60-Minuten-Spalte. „10 min zu 60 min" zeigt, um welchen Faktor der 60-Minuten-Wert bei kurzer Einwirkung zu streng ist; „60 min zu 8 h", um welchen Faktor er bei langer Einwirkung zu milde ist.\n\n| Stoff | AEGL-3 | 10 min zu 60 min | 60 min zu 8 h | AEGL-2 | 10 min zu 60 min | 60 min zu 8 h |\n|---|---|---|---|---|---|---|\n'+AEGLT.join('\n')+'\n';
 fs.writeFileSync(path.join(root,'docs','TECHNISCHER_CODE_AUDIT_Anhang.md'),md);
 console.log(T.filter(x=>x.includes('nicht bestanden')).join('\n')); console.log(NUM.join('\n')); console.log(VAL.filter(x=>x.includes('nicht bestanden')).map(x=>x.slice(0,170)).join('\n'));
 console.log(`Funktionstests ${T.length}, Szenarien ${VAL.length}: ${nB}/${nN}/${nP}`); console.log(stat);

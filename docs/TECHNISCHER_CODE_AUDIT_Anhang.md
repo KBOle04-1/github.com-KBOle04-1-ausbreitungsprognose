@@ -113,7 +113,7 @@ Bewertungsmaßstab, vor der Auswertung festgelegt: analytische Lösung ± 15 % (
 | S35 | Schwergas | Vergleich mit DEGADIS | DEGADIS | – | – | – | – | – | – | nicht prüfbar | Programm nicht ausführbar |
 | S36 | Schwergas | Vergleich mit SLAB | SLAB | – | – | – | – | – | – | nicht prüfbar | Programm nicht ausführbar |
 | S37 | Schwergas | Originalnomogramme Britter-McQuaid | Workbook 1988 | – | – | – | – | – | – | nicht prüfbar | Primärquelle lag nicht vor |
-| S38 | Toxikologie | AEGL-Werte gegen amtliche Liste | US-Umweltbehörde | – | – | – | – | – | – | nicht prüfbar | Abgleich noch nicht durchgeführt |
+| S38 | Toxikologie | AEGL-Bewertung mit Zeitbezug (10 Minuten bis 8 Stunden, Zeitmittel, Dosis) | US-Umweltbehörde | – | – | – | – | – | – | nicht prüfbar | im Programm nicht umgesetzt, daher kein Vergleich möglich; Datenabgleich der 60-Minuten-Werte siehe T01 bis T11 |
 | S39 | Brandrauch | Rauchkonzentration am Boden | Versuchsdaten | – | – | – | – | – | – | nicht prüfbar | keine Referenz; Emissionsdaten nicht belegt |
 | S40 | Brandrauch | Brandüberhöhung großer Flächenbrände | Versuchsdaten | – | – | – | – | – | – | nicht prüfbar | keine Referenz beschafft |
 | S41 | Vegetationsbrand | Ausbreitungsgeschwindigkeit gegen Rothermel | Rothermel | – | – | – | – | – | – | nicht prüfbar | Rothermel nicht umgesetzt, keine Vergleichsrechnung |
@@ -122,7 +122,34 @@ Bewertungsmaßstab, vor der Auswertung festgelegt: analytische Lösung ± 15 % (
 | S44 | Explosion | Rechenbeispiel CCPS | CCPS | – | – | – | – | – | – | nicht prüfbar | Quelle nicht verfügbar |
 | S45 | BLEVE | Wärmestrahlung gegen Rechenbeispiel CCPS/TNO | CCPS/TNO | – | – | – | – | – | – | nicht prüfbar | Quelle nicht verfügbar |
 | S46 | Gewässer | Fließgeschwindigkeit gegen Messung | HLNUG | – | – | – | – | – | – | nicht prüfbar | keine Geschwindigkeitsmessung verfügbar |
+| T01 | Toxikologie | Chlor: hinterlegte AEGL-1/2/3 für 60 Minuten (0.5 / 2 / 20) | US-Umweltbehörde: 0.5 / 2 / 20 | 3 | 3 | Treffer von 3 | 0 | 0 % | 1 bis 1 | bestanden |  |
+| T02 | Toxikologie | Ammoniak: hinterlegte AEGL-1/2/3 für 60 Minuten (30 / 160 / 1100) | US-Umweltbehörde: 30 / 160 / 1100 | 3 | 3 | Treffer von 3 | 0 | 0 % | 1 bis 1 | bestanden |  |
+| T03 | Toxikologie | Schwefeldioxid: hinterlegte AEGL-1/2/3 für 60 Minuten (0.2 / 0.75 / 30) | US-Umweltbehörde: 0.2 / 0.75 / 30 | 3 | 3 | Treffer von 3 | 0 | 0 % | 1 bis 1 | bestanden |  |
+| T04 | Toxikologie | Schwefelwasserstoff: hinterlegte AEGL-1/2/3 für 60 Minuten (0.51 / 27 / 50) | US-Umweltbehörde: 0.51 / 27 / 50 | 3 | 3 | Treffer von 3 | 0 | 0 % | 1 bis 1 | bestanden |  |
+| T05 | Toxikologie | Chlorwasserstoff: hinterlegte AEGL-1/2/3 für 60 Minuten (1.8 / 22 / 100) | US-Umweltbehörde: 1.8 / 22 / 100 | 3 | 3 | Treffer von 3 | 0 | 0 % | 1 bis 1 | bestanden |  |
+| T06 | Toxikologie | Fluorwasserstoff: hinterlegte AEGL-1/2/3 für 60 Minuten (1 / 24 / 44) | US-Umweltbehörde: 1 / 24 / 44 | 3 | 3 | Treffer von 3 | 0 | 0 % | 1 bis 1 | bestanden |  |
+| T07 | Toxikologie | Cyanwasserstoff (Blausäure): hinterlegte AEGL-1/2/3 für 60 Minuten (2 / 7.1 / 15) | US-Umweltbehörde: 2 / 7.1 / 15 | 3 | 3 | Treffer von 3 | 0 | 0 % | 1 bis 1 | bestanden |  |
+| T08 | Toxikologie | Kohlenmonoxid: hinterlegte AEGL-1/2/3 für 60 Minuten (kein Wert / 83 / 330) | US-Umweltbehörde: nicht empfohlen / 83 / 330 | 3 | 3 | Treffer von 3 | 0 | 0 % | 1 bis 1 | bestanden |  |
+| T09 | Toxikologie | Stickstoffdioxid: hinterlegte AEGL-Werte für 60 Minuten | Ergebnisseite der US-Umweltbehörde | – | – | – | – | – | – | nicht prüfbar | Seite am 16.11.2026 nicht abrufbar |
+| T10 | Toxikologie | Phosgen: hinterlegte AEGL-1/2/3 für 60 Minuten (kein Wert / 0.3 / 0.75) | US-Umweltbehörde: nicht empfohlen / 0.3 / 0.75 | 3 | 3 | Treffer von 3 | 0 | 0 % | 1 bis 1 | bestanden |  |
+| T11 | Toxikologie | Formaldehyd: hinterlegte AEGL-Werte für 60 Minuten | Ergebnisseite der US-Umweltbehörde | – | – | – | – | – | – | nicht prüfbar | Seite am 16.11.2026 nicht abrufbar |
 
-46 Szenarien: 26 bestanden, 6 nicht bestanden, 14 nicht prüfbar.
+57 Szenarien: 35 bestanden, 6 nicht bestanden, 16 nicht prüfbar.
 
 Jack Rabbit II, 12 Wertepaare (Entfernung Modell zu Messbogen): geometrisches Mittel 0,685, geometrische Varianz 1,41, Anteil innerhalb Faktor 2: 75 %, mittlere quadratische Abweichung im Logarithmus 0,584.
+
+## D. Zeitabhängigkeit der AEGL-Werte (Nachtrag 16.11.2026)
+
+Werte der US-Umweltbehörde in ppm für 10 min / 30 min / 60 min / 4 h / 8 h. Das Programm verwendet nur die 60-Minuten-Spalte. „10 min zu 60 min" zeigt, um welchen Faktor der 60-Minuten-Wert bei kurzer Einwirkung zu streng ist; „60 min zu 8 h", um welchen Faktor er bei langer Einwirkung zu milde ist.
+
+| Stoff | AEGL-3 | 10 min zu 60 min | 60 min zu 8 h | AEGL-2 | 10 min zu 60 min | 60 min zu 8 h |
+|---|---|---|---|---|---|---|
+| Chlor | 50 / 28 / 20 / 10 / 7.1 | 2,5 | 2,82 | 2.8 / 2.8 / 2 / 1 / 0.71 | 1,4 | 2,82 |
+| Ammoniak | 2700 / 1600 / 1100 / 550 / 390 | 2,45 | 2,82 | 220 / 220 / 160 / 110 / 110 | 1,38 | 1,45 |
+| Schwefeldioxid | 30 / 30 / 30 / 19 / 9.6 | 1 | 3,13 | 0.75 / 0.75 / 0.75 / 0.75 / 0.75 | 1 | 1 |
+| Schwefelwasserstoff | 76 / 59 / 50 / 37 / 31 | 1,52 | 1,61 | 41 / 32 / 27 / 20 / 17 | 1,52 | 1,59 |
+| Chlorwasserstoff | 620 / 210 / 100 / 26 / 26 | 6,2 | 3,85 | 100 / 43 / 22 / 11 / 11 | 4,55 | 2 |
+| Fluorwasserstoff | 170 / 62 / 44 / 22 / 22 | 3,86 | 2 | 95 / 34 / 24 / 12 / 12 | 3,96 | 2 |
+| Cyanwasserstoff | 27 / 21 / 15 / 8.6 / 6.6 | 1,8 | 2,27 | 17 / 10 / 7.1 / 3.5 / 2.5 | 2,39 | 2,84 |
+| Kohlenmonoxid | 1700 / 600 / 330 / 150 / 130 | 5,15 | 2,54 | 420 / 150 / 83 / 33 / 27 | 5,06 | 3,07 |
+| Phosgen | 3.6 / 1.5 / 0.75 / 0.2 / 0.09 | 4,8 | 8,33 | 0.6 / 0.6 / 0.3 / 0.08 / 0.04 | 2 | 7,5 |

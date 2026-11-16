@@ -1,6 +1,6 @@
 # Technischer Code-Audit der Ausbreitungsprognose (Schritt 1)
 
-Erstellt am 11.11.2026. Reine Analyse: An den Programmdateien und am Hauptzweig wurde nichts geändert. Dieser Bericht und die Prüfskripte liegen auf dem Zweig `audit/technischer-code-audit`.
+Erstellt am 11.11.2026, überprüft und ergänzt am 16.11.2026 (Nachtrag in Abschnitt 12). Reine Analyse: An den Programmdateien und am Hauptzweig wurde nichts geändert. Dieser Bericht und die Prüfskripte liegen auf dem Zweig `audit/technischer-code-audit`.
 
 ## 1. Zusammenfassung
 
@@ -13,11 +13,11 @@ Kritische Befunde (können zu gravierend falschen Gefahrenprognosen führen):
 | Nr. | Befund | Richtung des Fehlers |
 |---|---|---|
 | A-01 | Schwere giftige Gase im Fernbereich: Die „abgeleiteten" Entfernungen sind zu kurz. Gegenüber der veröffentlichten Ausgleichsgeraden der Chlor-Feldversuche liegt die Konzentration in 2 bis 11 km beim 0,10- bis 0,22-Fachen. Der Hinweis „bis zum 2,5-Fachen möglich" reicht nicht. | Gefahr unterschätzt |
-| A-02 | AEGL-Bewertung ohne Zeitbezug: 60-Minuten-Werte werden mit Höchstwerten einzelner Zeitpunkte verglichen; keine Mittelung, keine Dosis, Werte nicht abgeglichen. | unbestimmt |
+| A-02 | AEGL-Bewertung ohne Zeitbezug: 60-Minuten-Werte werden mit Höchstwerten einzelner Zeitpunkte verglichen; keine Mittelung, keine Dosis. Bei mehrstündiger Einwirkung ist der 60-Minuten-Wert bis zum 8-Fachen zu milde (Phosgen), bei 10 Minuten bis zum 6-Fachen zu streng (Chlorwasserstoff). | bei langer Einwirkung Gefahr unterschätzt |
 | A-03 | Brandrauch: Das Ergebnis hängt fast allein an der unsicheren Brandüberhöhung; gerechnet wird nur Ruß mit selbst gesetzten Stufen. | Gefahr kann unterschätzt werden |
 | A-04 | Britter-McQuaid wird ohne Prüfung außerhalb seines Anwendungsbereichs gerechnet: bei 80 m Quellhöhe, bei Freisetzungsdauer 0, bei zeitlich drehendem Wind. | unbestimmt |
 
-Weitere 10 Befunde der Stufe Hoch, 13 Mittel, 8 Niedrig (Abschnitt 9). Neu gegenüber dem bisherigen Prüfbericht sind unter anderem: stehenbleibendes altes Ergebnis nach einem Rechenfehler (A-06), Programmabbruch bei Freisetzungsrate 0 (A-07), stark überhöhte Reichweiten bei Sturm durch den festen Zeitschritt (A-08) und ein Sprung von 38 % am Deckel der Mischungsschicht (A-15).
+Weitere 10 Befunde der Stufe Hoch, 15 Mittel, 8 Niedrig (Abschnitt 9). Neu gegenüber dem bisherigen Prüfbericht sind unter anderem: stehenbleibendes altes Ergebnis nach einem Rechenfehler (A-06), Programmabbruch bei Freisetzungsrate 0 (A-07), stark überhöhte Reichweiten bei Sturm durch den festen Zeitschritt (A-08) und ein Sprung von 38 % am Deckel der Mischungsschicht (A-15).
 
 Eignung (Begründung in Abschnitt 11):
 
@@ -33,7 +33,7 @@ Eignung (Begründung in Abschnitt 11):
 - Quellcode: `index.html` (372 Zeilen), 14 Dateien unter `js/` (1488 Zeilen), `sw.js`, `tests/modelltests.js`.
 - Unterlagen: `README.md`, `docs/Pruefbericht.md`, `docs/Britter-McQuaid.md`, `docs/Konstanten.md`, `docs/Validierung.md`, `docs/Architektur.md`.
 - Veröffentlichter Stand: Abruf von `js/app-qualitaet.js` und `sw.js` von der veröffentlichten Adresse.
-- Prüfläufe: `tests/audit/audit_pruefungen.js` (49 Funktionstests, 5 numerische Kontrollrechnungen, 46 Validierungsszenarien), Ergebnisse in `docs/TECHNISCHER_CODE_AUDIT_Anhang.md`. Dazu neun Eingabefälle an der laufenden Oberfläche mit nachgebildeten Datenquellen.
+- Prüfläufe: `tests/audit/audit_pruefungen.js` (49 Funktionstests, 5 numerische Kontrollrechnungen, 57 Validierungsszenarien, davon 11 Datenabgleiche der AEGL-Werte seit dem 16.11.2026), Ergebnisse in `docs/TECHNISCHER_CODE_AUDIT_Anhang.md`. Dazu neun Eingabefälle an der laufenden Oberfläche mit nachgebildeten Datenquellen.
 
 Nicht geprüft werden konnte: das Verhalten der echten Datendienste auf dem Gerät; das Originalwerk von Britter und McQuaid (lag nicht vor); Vergleiche mit ALOHA, DEGADIS und SLAB (nicht ausführbar). Literaturangaben ohne abgerufene Quelle sind als „nicht abgeglichen" gekennzeichnet.
 
@@ -181,9 +181,10 @@ Bewertung: Mit den vorhandenen Eingaben ist nur die Anfangsdichte belastbar best
 - Verglichen wird mit dem Höchstwert aus Momentaufnahmen je 15-Minuten-Fenster (`js/app-rechnung.js` Z. 87). Das ist weder eine Momentankonzentration im physikalischen Sinn (das Modell liefert Mittelwerte über die den Ausbreitungsparametern zugrunde liegende Zeit) noch ein Mittel über die AEGL-Zeit.
 - Ein Zeitverlauf je Rasterpunkt wird nicht gespeichert. Für eine sachgerechte Bewertung ist er erforderlich: gleitende Mittel über die AEGL-Zeiten und eine Dosisgröße.
 - Fehlende Werte sind nicht ersetzt (Kohlenmonoxid und Phosgen ohne AEGL-1). Das ist richtig.
-- Kein Wert ist gegen die amtliche Liste abgeglichen.
+- Abgleich am 16.11.2026: Die hinterlegten 60-Minuten-Werte von neun der elf Stoffe stimmen mit den Ergebnisseiten der US-Umweltbehörde überein (Chlor, Ammoniak, Schwefeldioxid, Schwefelwasserstoff, Chlorwasserstoff, Fluorwasserstoff, Cyanwasserstoff, Kohlenmonoxid, Phosgen). Für Stickstoffdioxid und Formaldehyd war die Seite nicht abrufbar; diese Werte bleiben ungeprüft.
+- Die amtlichen Werte hängen stark von der Einwirkzeit ab (Anhang D). Beispiel Chlor AEGL-3: 50 ppm für 10 Minuten, 20 ppm für 60 Minuten, 7,1 ppm für 8 Stunden. Über alle neun Stoffe liegt der 10-Minuten-Wert beim 1- bis 6,2-Fachen, der 8-Stunden-Wert beim 1/1,6 bis 1/8,3 des 60-Minuten-Werts.
 
-Bewertung: fachlich nicht tragfähig (A-02, A-13).
+Bewertung: Die Zahlenwerte sind für neun Stoffe richtig. Das Bewertungsverfahren bleibt fachlich nicht tragfähig, weil die Einwirkzeit fehlt (A-02); bei mehrstündiger Freisetzung ist die Bewertung mit dem 60-Minuten-Wert nicht auf der sicheren Seite.
 
 ### 5.5 Brandrauch
 
@@ -220,7 +221,7 @@ Bewertung: Schulungsmodell (A-10).
 
 ### 5.8 Gasexplosion und Druckwelle
 
-- Druck: `blastRatio` Z. 3–5, Kinney-Graham; Oberflächenfaktor 1,8; Skalierung mit dem Luftdruck. Dimensionsrichtig.
+- Druck: `blastRatio` Z. 3–5, Kinney-Graham; Oberflächenfaktor 1,8; Skalierung mit dem Luftdruck. Dimensionsrichtig. Die Formel stimmt Zeichen für Zeichen mit der veröffentlichten Fassung überein (Abgleich am 16.11.2026, Quelle im Nachtrag).
 - Gas: W = Anteil × Masse × Heizwert / 4,6 MJ/kg (`js/app-rechnung.js` Z. 251), Anteile 3, 10 und 20 %.
 - Reflexion: nur über den Faktor 1,8. Beugung: nicht. Abschirmung: Sichtlinie auf 30-m-Höhendaten, Ja/Nein.
 - Laufzeit mit Schallgeschwindigkeit (Z. 222): obere Grenze.
@@ -291,13 +292,13 @@ Weitere Feststellungen:
 
 Bewertungsmaßstab, vor der Auswertung festgelegt: analytische Lösung ± 15 % (Konzentration) bzw. ± 20 % (Reichweite); Lehrbuchbeispiel ± 5 %; Versuchsdaten Faktor 2; veröffentlichte Ausgleichsgerade Faktor 4; Richtwerte ± 10 %.
 
-46 Szenarien (Anhang C): 26 bestanden, 6 nicht bestanden, 14 nicht prüfbar.
+57 Szenarien (Anhang C): 35 bestanden, 6 nicht bestanden, 16 nicht prüfbar. Davon sind 11 Datenabgleiche der AEGL-Werte (T01 bis T11), ergänzt am 16.11.2026.
 
 | Bereich | bestanden | nicht bestanden | nicht prüfbar |
 |---|---|---|---|
 | Gauß, passiv | 9 | 0 | 2 (ALOHA, Feldversuch) |
 | Schwergas | 12 | 6 | 3 (DEGADIS, SLAB, Originalnomogramme) |
-| Toxikologie | 0 | 0 | 1 |
+| Toxikologie | 9 (Datenabgleich) | 0 | 3 |
 | Brandrauch | 0 | 0 | 2 |
 | Vegetationsbrand | 0 | 0 | 2 |
 | Explosion | 1 | 0 | 2 |
@@ -351,7 +352,7 @@ Prioritäten: **Kritisch** (kann zu gravierend falschen Gefahrenprognosen führe
 | Nr. | Datei, Funktion, Zeile | Aktuelle Umsetzung | Problem | Auswirkung | Empfohlene Korrektur |
 |---|---|---|---|---|---|
 | A-01 | `js/modell-schwergas.js`, `denseDistance`, Z. 97–109 | Unter dem Kurvenbereich wird die Wolke wie eine passive Gauß-Wolke weiter verdünnt | Gegenüber Chlor-Feldversuchen 5- bis 10-fach zu niedrige Konzentration in 2 bis 11 km | AEGL-Entfernungen für schwere giftige Gase um den Faktor 2,5 bis 4 zu kurz | Dynamisches Schwergasmodell; bis dahin abgeleitete Entfernungen nicht als Zahl ausgeben oder durch eine belegte obere Abschätzung ersetzen |
-| A-02 | `js/app-rechnung.js`, `runCloud`, Z. 87; `js/stoffdaten.js`, Z. 4–14 | Höchstwert aus Momentaufnahmen gegen AEGL 60 Minuten | Kein Zeitmittel, keine Expositionsdauer, nur eine Zeitstufe, Werte nicht abgeglichen | Bewertung nicht normgerecht, Richtung unbestimmt | Zeitverlauf je Rasterpunkt, gleitende Mittel je AEGL-Zeit, amtliche Tabellen mit Quelle |
+| A-02 | `js/app-rechnung.js`, `runCloud`, Z. 87; `js/stoffdaten.js`, Z. 4–14 | Höchstwert aus Momentaufnahmen gegen AEGL 60 Minuten | Kein Zeitmittel, keine Expositionsdauer, nur eine Zeitstufe | Bewertung nicht normgerecht. Bei Einwirkung über Stunden bis zum 8-Fachen zu milde, bei wenigen Minuten bis zum 6-Fachen zu streng (Anhang D) | Zeitverlauf je Rasterpunkt, gleitende Mittel je AEGL-Zeit, amtliche Tabellen mit Quelle |
 | A-03 | `js/modell-ausbreitung.js`, `plumeRiseFinal`, Z. 88–103; `js/app-rechnung.js`, Z. 69; `js/app-eingabe.js`, Z. 8 | Rußfahne mit Punktquelle, Wind in 10 m, eigene Stufen | Überhöhung entscheidet allein; keine Brandgase | „Nicht erreicht" kann falsch sein | Bandbreite der Überhöhung rechnen und zeigen; Stufen entfernen oder durch belegte Bewertung ersetzen |
 | A-04 | `js/app-rechnung.js`, `runCloud`, Z. 54–55; `js/modell-schwergas.js`, `bmDistance`, Z. 72–75 | Britter-McQuaid für jede Eingabe | Keine Prüfung von Quellhöhe, Freisetzungsdauer, Windgrenzen | Entfernungen für Fälle, für die das Verfahren nicht gilt | Anwendungsgrenzen prüfen und die Rechnung sperren; Dauer 0 abweisen |
 
@@ -367,7 +368,7 @@ Prioritäten: **Kritisch** (kann zu gravierend falschen Gefahrenprognosen führe
 | A-10 | `js/modell-vegetationsbrand.js`, `rosParams`, Z. 11–17; `index.html`, Z. 270 ff. | Faustformeln, überall brennbar | kein Brennstoffmodell, keine Landbedeckung, kein Flugfeuer | Geschwindigkeit und Fläche um den Faktor 2 bis 3 unsicher; Feuer läuft über Sperren | Rothermel mit Brennstoffmodellen; Landbedeckung als Sperr- und Brennstoffkarte |
 | A-11 | `index.html`, Z. 225; `js/app-rechnung.js`, Z. 251 | feste Energieanteile 3 / 10 / 20 % | wissenschaftlich nicht als allgemeine Werte begründbar | Druckzonen je nach Wahl um ein Mehrfaches verschieden | Verfahren mit Hindernisdichte und Verdämmung; Spannweite ausgeben |
 | A-12 | `js/app-rechnung.js`, `cloudPost`, Z. 104; `render`, Z. 132 | Schwergas als Vollkreis; Flächen aus Gauß | Kreis unterstellt alle Richtungen; Flächen für schwere Gase zu schmal | Fehldeutung der Karte | Sektor in Windrichtung statt Kreis; Gauß-Flächen bei Schwergas abgesetzt darstellen |
-| A-13 | `js/stoffdaten.js`, Z. 4–16 | AEGL-, Stoff- und Siededaten aus dem Gedächtnis | nicht abgeglichen | einzelne Werte können falsch sein | Abgleich mit amtlichen Quellen, Quelle je Wert |
+| A-13 | `js/stoffdaten.js`, Z. 4–16 | AEGL-, Stoff- und Siededaten aus dem Gedächtnis | AEGL für neun Stoffe am 16.11.2026 bestätigt; Stickstoffdioxid, Formaldehyd, molare Massen, Explosionsgrenzen und Siededaten nicht abgeglichen | einzelne Werte können falsch sein | restliche Werte abgleichen, Quelle je Wert im Programm hinterlegen |
 | A-14 | `js/modell-schwergas.js`, `bmInit`, Z. 45–53; `js/app-eingabe.js`, Z. 25 | nur Anfangsdichte; Lagertemperatur nur Anzeige | kein Quellterm; Eingabefeld ohne Wirkung auf das Ergebnis | Ergebnis hängt am geschätzten Massenstrom; Feld täuscht Einfluss vor | Quelltermmodul oder Feld als „nur Anzeige" kennzeichnen |
 
 ### Mittel
@@ -387,6 +388,9 @@ Prioritäten: **Kritisch** (kann zu gravierend falschen Gefahrenprognosen führe
 | A-25 | `index.html`, Z. 263; `README.md`, Z. 308 | Text: Druckwelle wird bemessen; „wie in der Literatur" | stimmt nicht mit dem Programm bzw. ist nicht belegt | falsche Erwartung | Texte berichtigen |
 | A-26 | `js/modell-ausbreitung.js`, `terrainWind`, Z. 70–86, Z. 121–128; `js/app-rechnung.js`, Z. 168, 191 | Eigenansätze wählbar | kein Literaturbeleg; Fließrichtung ungeprüft | bei Wahl unbelegte Lenkung der Wolke | aus dem Auslieferungsstand entfernen oder in eine Versuchsfassung auslagern |
 | A-27 | `js/modell-schwergas.js`, `bmInit`, Z. 46–52 | Rückfall auf „gas" ohne Hinweis; keine Prüfung von Masse und Druck | Eingabe und Rechnung weichen still voneinander ab | Nutzer rechnet anderes als gewählt | Hinweis ausgeben; Eingaben prüfen |
+
+| A-37 | `js/modell-ausbreitung.js`, `sigma`, Z. 23–44; `js/app-qualitaet.js`, Z. 25–27 | Briggs-Formeln für jede Entfernung ab 1 m | Die abgerufene Quelle nennt für diese Formeln den Bereich 100 m bis 10 km. Über 10 km stuft das Programm herab, unter 100 m nicht | Reichweiten unter 100 m (z. B. „bis ca. 40 m") ohne Hinweis auf den verlassenen Gültigkeitsbereich | Ergebnisse unter 100 m kennzeichnen |
+| A-38 | `js/modell-ausbreitung.js`, `sigma`, Z. 25–30 (Bebauung) und Z. 36–41 (Freifläche C bis F) | Koeffizienten aus dem Gedächtnis | Bestätigt sind nur die Klassen A und B der Freifläche. Für Bebauung zeigt eine abgerufene Programmquelle bei Klasse D ein anderes Vorzeichen der Exponenten als das Programm; welche Fassung dem Original entspricht, ist offen | Konzentrationen in Bebauung könnten systematisch abweichen | Abgleich an Briggs (1973) oder einem Handbuch, das die Tabelle vollständig wiedergibt |
 
 ### Niedrig
 
@@ -434,6 +438,35 @@ Einordnung der Funktionen:
 | Nur eingeschränkt verwendbar | Britter-McQuaid innerhalb der Kurven (über rund 2000 ppm, ebenes Gelände, Bodenquelle); Geländewirkung; Wettermodellvergleich; Vegetationsbrand als Richtungs- und Größenordnungsanzeige; Gasexplosion als Spannweite |
 | Vor fachlicher Nutzung grundlegend zu überarbeiten | Schwergas-Fernbereich; AEGL-Bewertung; Brandrauch einschließlich Brandgasen; Quellterm und Zweiphasenfreisetzung; Gewässerwirkung; Vegetationsbrand mit Brennstoff und Landbedeckung; Gaswolkenexplosion |
 
+## 12. Nachtrag vom 16.11.2026
+
+Der Auftrag wurde am 16.11.2026 erneut erteilt. Der Bericht vom 11.11.2026 lag bereits auf diesem Zweig. Er wurde nicht neu geschrieben, sondern überprüft und ergänzt.
+
+### 12.1 Unveränderter Stand
+
+| Prüfpunkt | Ergebnis am 16.11.2026 |
+|---|---|
+| `main` und `gh-pages` | weiterhin `a0ddc46`, keine Änderung seit dem 11.11.2026 |
+| Veröffentlichte Dateien `js/app-qualitaet.js`, `sw.js` | Modellstand 0.11, Zwischenspeicher `ausbreitung-v12`, unverändert |
+| Prüfskript erneut ausgeführt | Funktionstests 49 (37 bestanden, 12 nicht bestanden), alle Zahlen wie am 11.11.2026 |
+| Verzeichnis der Befunde | alle Befunde bestehen fort, da am Programm nichts geändert wurde |
+
+### 12.2 Neue Abgleiche mit abgerufenen Quellen
+
+| Gegenstand | Ergebnis | Folge |
+|---|---|---|
+| AEGL-Werte, 60 Minuten, elf Stoffe | neun bestätigt, zwei nicht abrufbar (Stickstoffdioxid, Formaldehyd). Für Stickstoffdioxid stützt die abgerufene Seite für Distickstofftetroxid die Werte mittelbar (dort halb so große Zahlen: 0,25 / 6,2 / 10 ppm). | A-13 teilweise erledigt; Szenarien T01 bis T11 |
+| Zeitabhängigkeit der AEGL-Werte | in Anhang D beziffert | A-02 präzisiert: bei langer Einwirkung nicht auf der sicheren Seite |
+| Druckformel nach Kinney und Graham | stimmt mit der veröffentlichten Formel überein | Status der Formel: belegt |
+| Ausbreitungsparameter nach Briggs | Freifläche Klassen A und B bestätigt; übrige nicht; Gültigkeitsbereich 100 m bis 10 km; abweichende Fassung für Bebauung in einer Programmquelle | neue Befunde A-37, A-38 |
+| Schichtungstabelle nach Pasquill | Die abgerufene Tabelle bestätigt die Zuordnung der Nachtklassen (bewölkt E, klar F bei 2 bis 3 m/s; D und E bei 3 bis 4 m/s) | keine Abweichung zum Programm gefunden; Tagklassen bleiben wegen der eigenen Strahlungsgrenzen Näherung (A-16) |
+
+Nicht möglich war der unmittelbare Abruf der einzelnen Ergebnisseiten der US-Umweltbehörde; die Werte stammen aus den Suchergebnissen zu diesen Seiten. Vor einer Übernahme in das Programm sind sie an den Seiten selbst gegenzulesen.
+
+### 12.3 Unveränderte Gesamtbewertung
+
+Die Ergänzungen ändern die Gesamtbewertung in Abschnitt 11 nicht. Die Zahl der kritischen Befunde bleibt vier. Der Befund A-02 ist schärfer gefasst, A-13 zum größeren Teil entkräftet.
+
 ## Quellen der in diesem Audit verwendeten Vergleichsdaten
 
 - Kurventabellen Britter-McQuaid (Wiedergabe): https://oaktrust.library.tamu.edu/server/api/core/bitstreams/634efe48-8615-42f1-9cc6-0884b5f602df/content
@@ -441,3 +474,7 @@ Einordnung der Funktionen:
 - Messwerte je Messbogen: https://www.cisa.gov/sites/default/files/publications/2019-CSSS-Jack-Rabbit-II-Update-508.pdf
 - Rauigkeit der Versuchsfläche: https://www.icheme.org/media/11891/paper-04.pdf
 - Feuerballradien und Abstände: https://tc.canada.ca/en/dangerous-goods/bleve-response-prevention
+- AEGL-Werte (abgerufen am 16.11.2026): Chlor https://19january2021snapshot.epa.gov/aegl/chlorine-results-aegl-program · Ammoniak https://19january2017snapshot.epa.gov/aegl/ammonia-results-aegl-program · Schwefeldioxid https://www.epa.gov/node/67349 · Schwefelwasserstoff https://epa.gov/aegl/hydrogen-sulfide-results-aegl-program · Chlorwasserstoff https://www.epa.gov/node/67369 · Fluorwasserstoff https://epa.gov/aegl/hydrogen-fluoride-results-aegl-program · Cyanwasserstoff https://www.epa.gov/node/63041 · Kohlenmonoxid https://19january2021snapshot.epa.gov/aegl/carbon-monoxide-results-aegl-program_.html · Phosgen https://epa.gov/aegl/phosgene-results-aegl-program · Distickstofftetroxid https://19january2021snapshot.epa.gov/aegl/nitrogen-tetroxide-results-aegl-program
+- Druckformel nach Kinney und Graham in veröffentlichter Fassung: https://arxiv.org/pdf/2408.04078
+- Ausbreitungsparameter nach Briggs und Schichtungstabelle: https://cyclone.unbc.ca/presentations/ccwwf/aq/node6.html
+- Abweichende Fassung der Formeln für Bebauung: https://rdrr.io/github/holstius/plume/src/R/Briggs.R
